@@ -60,7 +60,7 @@
 
 \begin{document}
 
-\title{Does the UC-Security Notion of PAKE \\ Imply Game-Based Security?}
+\title{Does the UC-Security Notion for PAKE \\ Imply Game-Based Security?}
 
 \author{Jiayu Xu}
 \affil{Oregon State University \\ \texttt{xujiay@oregonstate.edu}}
@@ -68,6 +68,34 @@
 
 \maketitle
 
+\section{Introduction}
+A \emph{Password-Authenticated Key Exchange (PAKE)} protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy string called the password. Crucially, such a protocol must be secure against man-in-the-middle adversaries that can arbitrarily modify the protocol messages. One common attack on PAKE is \emph{online guessing}, in which the adversary chooses a candidate password $\pw^*$ and impersonates Bob to Alice; if Alice's password is indeed $\pw^*$, then the adversary learns Alice's output key. Since passwords have low entropy, the adversary has a non-negligible probability of guessing Alice's password correctly; at a high level security for PAKE requires that online guessing is the only feasible attack.
+
+While the intuition of PAKE security looks simple and innocuous, a formal security definition proves incredibly difficult. There are two such definitions considered standard by the community: the game-based security notion by Bellare, Pointcheval and Rogaway \cite{EC:BelPoiRog00} (henceforth \emph{BPR-security}), and the Universally Composable (UC) security notion by Canetti et al. \cite{EC:CHKLM05} (henceforth \emph{UC-security}). Both definitions take pages to describe and explain, and contain various subtleties that are confusing to beginners and understudied by the community. A standard result \cite[Appendix~A]{EC:CHKLM05} shows that UC-security implies BPR-security.
+
+Over the years, a large number of variants of both BPR- and UC-security have been proposed. While many of these are essentially tailoring the definition to fit a specific protocol construction, some do have an intuitive interpretation and capture certain nuances of PAKE security. This work focuses on two of them:
+\begin{itemize}
+  \item The variant of BPR-security by Katz, Ostrovsky and Yung \cite{JACM:KatOstYun09} (henceforth \emph{KOY-security}), which places more constraints on what exactly counts as an ``active online attack''; and
+  \item The variant of UC-security by \cite{EC:DHPRY18} called \emph{implicit-only UC-security}, which disallows the ideal adversary from learning whether an online attack has succeeded or not.
+\end{itemize}
+Neither of the aforementioned works' main focus was security notions. The conference proceedings version of the KOY paper \cite{EC:KatOstYun01} proposed a new PAKE protocol and proved its BPR-security; in the journal version \cite{JACM:KatOstYun09} KOY proved that their protocol actually satisfies the stronger KOY-security, although the difference between these two notions was left unexplained. Implicit-only UC-security was introduced because the authors of \cite{EC:DHPRY18} used PAKE to construct some higher-level protocols, and the underlying PAKE needs this stronger security notion for the higher-level protocol to be secure. Perhaps this explains why these two security notions are not widely used: we do not know of any studies of either KOY- or implicit-only UC-security per se, and subsequent works generally continued to use BPR- and UC-security.
+
+\paragraph{Our contributions.}
+In this work, we present a thorough study of KOY- and implicit-only UC-security for PAKE, and draw some interesting connections between them and their more standard counterparts. Our technical contributions are two-fold:
+\begin{enumerate}
+  \item In \Cref{sec:counterexample} we show that UC-security does \emph{not} imply KOY-security, by giving a concrete counterexample that is UC-secure but not KOY-secure;
+  \item In \Cref{sec:implicit-only} we show that implicit-only UC-security implies KOY-security. Furthermore, by examining our proof, one can easily recover the standard proof that UC-security implies BPR-security.
+\end{enumerate}
+Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their more standard counterparts in the same way, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
+
+As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners.
+
+\paragraph{A personal anecdote: how did I dig out KOY-security?}
+I learned game-based PAKE security definitions ``backwards''. For a very long time, KOY-security was the standard reference for me, and I had no idea that KOY and BPR were actually different. Very recently, I needed to prove a generalization of UC-security $\Rightarrow$ game-based security, and I just couldn't make the proof go through. After some thought, I realized that the ``theorem'' I tried to prove was actually wrong --- similar to the counterexample in \Cref{sec:counterexample} --- and you needed to tweak the game-based security definition to make the proof work.
+
+At that time I thought there was an error in the standard result in \cite{EC:CHKLM05}. \cite{EC:CHKLM05} claims that their game-based security notion follows BPR, so I checked \cite{EC:BelPoiRog00}. I immediately realized that the ``BPR-security'' I had in mind was in fact not what BPR said, and the actual BPR-security was exactly what I needed in my proof.
+
+I decided to write down my counterexample. During this process, I realized that apart from replacing KOY- with BPR-security, another way to invalidate the counterexample was to strengthen UC-security to implicit-statement UC-security. Perhaps implicit-statement UC-security implies KOY-security? This proof indeed went through, and the technical pieces of this work were complete.
 
 \section{UC-Security Does Not Imply KOY-Security}
 \label{sec:counterexample}
@@ -107,7 +135,7 @@ Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fp
         \item If there has been a $(\TestPwd, sid, P, \star)$ command from $\adv$ to $\Fpake$ which resulted in ``correct guess'' (see step 2), then set $h := H_0(K^*)$; otherwise sample $h \gets \{0,1\}^\lambda$. Either way, send $h$ from $P$ to $P'$.
         \item Also compute $SK^* := H(K^*)$ and send $(\NewKey, sid, P, SK^*)$ to $\func$.
       \end{enumerate}
-  \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P, (SK')^*)$ to $\func$.
+  \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$ to $\Fpake$ and $h^*$ from $\adv$ to $P'$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P', (SK')^*)$ to $\func$.
 \end{enumerate}
 
 We now show that for any environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
@@ -218,6 +246,7 @@ In other words, there is a mismatch between the two security notions regarding w
 We argue that the UC-security notion is the more ``natural'' way of modeling PAKE security. Indeed, what we do in our counterexample --- sending an authenticator for the counterparty to check if the login attempt has been successful --- is exactly what's done to achieve explicit authentication in PAKE, i.e., the property above is common. (The uncommon thing in our counterexample is that the receiver does not actually verify the authenticator and outputs the intended output key anyway.) Therefore, in the game-based security definition a $\Send$ command alone --- which allows the adversary to see the protocol transcript --- should already be counted as an active attack.
 
 \section{Implicit-Only UC-Security Implies KOY-Security}
+\label{sec:implicit-only}
 Our main result in this section is:
 \begin{theorem}
 Suppose $\Pi$ is a PAKE protocol that UC-realizes $\Fipake$. Then $\Pi$ is KOY-secure.
