@@ -1,0 +1,246 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{claim}{Claim}
+\usepackage{authblk}
+\usepackage{cryptocode}
+\usepackage{csquotes}
+\usepackage{enumerate}
+\usepackage{float}
+\usepackage{framed}
+\usepackage[colorlinks]{hyperref}
+\def\tmp#1#2#3{
+  \definecolor{Hy#1color}{#2}{#3}
+  \hypersetup{#1color=Hy#1color}}
+\tmp{link}{HTML}{800006}
+\tmp{cite}{HTML}{2E7E2A} % better default colors for hyperref links; see https://tex.stackexchange.com/a/525297
+\usepackage[capitalise]{cleveref}
+
+\newcommand{\group}{\mathbb{G}}
+\newcommand{\Z}{\mathbb{Z}}
+
+\newcommand{\adv}{\mathcal{A}}
+\newcommand{\env}{\mathcal{Z}}
+\renewcommand{\sim}{\mathcal{S}}
+\newcommand{\red}{\mathcal{R}}
+\newcommand{\func}{\mathcal{F}}
+\newcommand{\Fpake}{\func_\mathrm{PAKE}}
+\newcommand{\Fipake}{\func_\mathrm{iPAKE}}
+
+\newcommand{\Adv}{\mathbf{Adv}}
+\newcommand{\Dist}{\mathbf{Dist}}
+
+\newcommand{\ICEnc}{\mathcal{E}}
+\newcommand{\ICDec}{\mathcal{D}}
+
+\newcommand{\pw}{\mathsf{pw}}
+
+\newcommand{\NewSession}{\mathsf{NewSession}}
+\newcommand{\TestPwd}{\mathsf{TestPwd}}
+\newcommand{\NewKey}{\mathsf{NewKey}}
+
+\newcommand{\fresh}{\mathsf{fresh}}
+\newcommand{\compromised}{\mathsf{compromised}}
+\newcommand{\interrupted}{\mathsf{interrupted}}
+\newcommand{\completed}{\mathsf{completed}}
+
+\newcommand{\Execute}{\mathsf{Execute}}
+\newcommand{\Send}{\mathsf{Send}}
+\newcommand{\Reveal}{\mathsf{Reveal}}
+\newcommand{\Test}{\mathsf{Test}}
+
+\begin{document}
+
+\section{UC-Security Does Not Imply KOY-Security}
+\subsection{The Counterexample}
+Consider the following PAKE protocol:
+
+\bigskip\noindent\textbf{\underline{Protocol $\Pi$}:}
+\begin{enumerate}
+  \item Protocol parties $P$ and $P'$ run EKE, resulting in keys $K$ (for $P$) and $K'$ (for $P'$).
+  \item $P$ sends $h := H_0(K)$ to $P'$.
+  \item $P$ and $P'$ outputs $H(K)$ and $H(K')$, respectively. Here, $H$ and $H_0$ are two ROs from $\{0,1\}^\lambda$ to itself.
+\end{enumerate}
+\begin{figure}[H]
+\pseudocodeblock{
+P(\pw) \< \< P'(\pw') \\ 
+\< \sendmessageright*{\text{EKE}} \< \\
+K \< \< K' \\
+\< \sendmessageright*{h := H_0(K)} \< \\
+\text{output }H(K) \< \< \text{output }H(K')
+}
+\caption{Our counterexample}
+\end{figure}
+Note that $h$ is a redundant message, in the sense that neither party's output depends on it.
+\subsection{The Protocol Is UC-Secure}
+\begin{proof}
+Since EKE is UC-secure, we may replace the EKE part in protocol $\Pi$ with the UC PAKE functionality $\Fpake$. Call the resulting protocol $\tilde{\Pi}$; we only need to prove that $\tilde{\Pi}$ is UC-secure. In order to distinguish the $\Fpake$ that is a building block of the \emph{real protocol} $\tilde{\Pi}$ and the $\Fpake$ that is the functionality interacting with the simulator in the \emph{ideal world}, we abbreviate the latter as $\func$.
+
+Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fpake$ honestly, and samples a random string as $h$, unless $P$'s instance has been successfully attacked --- in which case $\sim$ knows $P$'s EKE key and can simulate $h$ honestly:
+
+\bigskip\noindent\textbf{\underline{Simulator $\sim$}:}
+\begin{enumerate}
+  \item On $(\NewSession, sid, P, P')$ from $\func$, send the same message from $\Fpake$ to $\adv$. \\
+      On $(\NewSession, sid, P', P)$ from $\func$, also send the same message from $\Fpake$ to $\adv$.
+  \item On $(\TestPwd, sid, \star, \star)$ from $\adv$ to $\Fpake$, forward this message to $\func$ and sends $\func$'s responde from $\Fpake$ to $\adv$. This defines a state of $P$'s instance ($\fresh$, $\compromised$ or $\interrupted$).
+  \item On $(\NewKey, sid, P, K^*)$ from $\adv$ to $\Fpake$,
+      \begin{enumerate}[(i)]
+        \item If there has been a $(\TestPwd, sid, P, \star)$ command from $\adv$ to $\Fpake$ which resulted in ``correct guess'' (see step 2), then set $h := H_0(K^*)$; otherwise sample $h \gets \{0,1\}^\lambda$. Either way, send $h$ from $P$ to $P'$.
+        \item Also compute $SK^* := H(K^*)$ and send $(\NewKey, sid, P, SK^*)$ to $\func$.
+      \end{enumerate}
+  \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P, (SK')^*)$ to $\func$.
+\end{enumerate}
+
+We now show that $\sim$ generates an ideal-world view for $\env$ that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
+\begin{itemize}
+  \item $\adv$ does not send a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', but
+  \item $\adv$ queries $H_0(K)$ or $H(K)$.
+\end{itemize}
+Define $\mathsf{QueryP'}$ be the event that
+\begin{itemize}
+  \item $\adv$ does not send a $(\TestPwd, sid, P', \star)$ command resulting in ``correct guess'', but
+  \item $\adv$ queries $H(K)$.
+\end{itemize}
+\begin{claim}
+$\Pr[\mathsf{QueryP}]$ and $\Pr[\mathsf{QueryP'}]$ are both negligible.
+\end{claim}
+
+If $\adv$ does not send a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', then $\Fpake$ marks $P$'s session as either $\fresh$ or $\interrupted$. Either way, when $K$ is generated it is a uniformly random string in $\{0,1\}^\lambda$ independent of $\env$'s view, and later the only information $\env$ learns about $K$ is $H_0(K)$ (from the protocol message) and $H(K)$ (from $P$'s output key) --- which are independent of $K$ unless and until $\mathsf{QueryP}$ happens. Therefore, $\Pr[\mathsf{QueryP}]$ is upper-bounded by $q_H/2^\lambda$ (where $q_H$ is the total number of $H$ and $H_0$ queries). A similar argument works for $\mathsf{QueryP'}$.
+\begin{claim}
+If neither $\Pr[\mathsf{QueryP}]$ nor $\Pr[\mathsf{QueryP'}]$ happens, then $\env$'s views in the real world and in the ideal world are identical.
+\end{claim}
+The argument goes as follows:
+\begin{enumerate}
+  \item Regarding $\adv$'s interface with $\Fpake$, $\sim$ does nothing other than forwarding $\adv$'s message to $\func$ and forwarding $\func$'s response back to $\adv$. In other words, $\sim$ simulates $\Fpake$ honestly. So $\sim$ generates a view that is identical to the real-world view.
+  \item Regarding protocol message $h$, first note that in both worlds this message is generated right after $\adv$ sends $(\NewKey, sid, P, K^*)$ to $\Fpake$.
+      \begin{itemize}
+        \item If $\adv$ has sent a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', then in the real world $P$'s instance in $\func$ was $\compromised$. This causes $P$'s EKE key $K$ to be equal to $K^*$, so $h = H_0(K) = H_0(K^*)$. This exactly matches how $h$ is generated by $\sim$.
+        \item Otherwise, we know that $\adv$ does not query $H_0(K)$ (because $\mathsf{QueryP}$ does not happen). This means that in the real world $h = H_0(K)$ is a uniformly random string in $\{0,1\}^\lambda$ independent of the rest of the game, which again matches how $h$ is generated by $\sim$.
+      \end{itemize}
+  \item Regarding $P$'s output key $SK$,
+      \begin{itemize}
+        \item If $\adv$ has sent a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', then as argued above, in the real world $K = K^*$, so $SK = H(K) = H(K^*)$. In the ideal world, $\sim$ computes $SK^* = H(K^*)$, so $SK^* = SK$. Furthermore, $\func$ has marked $P$'s instance $\compromised$ (because $\sim$ has sent a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess''), so when $\sim$ sends $(\NewKey, sid, P, SK^*)$ to $\func$, $\func$ outputs $SK^*$ to $P$. In sum, in both worlds $P$'s output key is $SK = H(K^*)$, so there is no difference.
+        \item Otherwise, we know that $\adv$ does not query $H(K)$ (because $\mathsf{QueryP}$ does not happen). This means that in the real world $SK$ is a uniformly random string in $\{0,1\}^\lambda$ independent of the rest of the game. In the ideal world, $\func$ has marked $P$'s instance $\fresh$ or $\interrupted$, so when $\sim$ sends $(\NewKey, sid, P, SK^*)$ to $\func$, $\func$ ignores $SK^*$ and freshly samples a uniformly random string in $\{0,1\}^\lambda$ as $P$'s output key. In sum, in both worlds $P$'s output key is $SK \gets \{0,1\}^\lambda$, so there is no difference.
+      \end{itemize}
+      The same argument can be made for $P'$'s output key $SK'$.
+\end{enumerate}
+
+Combining the two claims above immediately yields the UC-security of $\tilde{\Pi}$.
+\end{proof}
+\subsection{The Protocol Is Not KOY-Secure}
+\begin{proof}
+Consider the following adversary $\adv$. Roughly speaking, $\adv$ assumes the role of $P'$ and runs $P'$'s algorithm on all candidate passwords, and uses $h$ to find out which one is the correct password (after which the attack becomes trivial):
+
+\bigskip\noindent\textbf{\underline{Adversary $\adv$}:}
+
+\medskip
+For all $\pw_i \in D$, $\adv$ performs the following steps until it finds $\pw^*$:
+\begin{enumerate}
+  \item Initiate $P$'s instance $P^i$ by sending $\Send(P^i, \text{start})$ to the game challenger.
+  \item On $c$ from the game challenger, sample $y \gets \Z_p$ and
+      \begin{enumerate}[(i)]
+        \item Compute $Y^* := \ICEnc(\pw_i, g^y)$ and send $\Send((P')^i, P^i, Y^*)$ to the game challenger.
+        \item Also, compute $X := \ICDec(\pw_i, c)$ and then $K^* := X^y$.
+      \end{enumerate}
+  \item On $h$ from the game challenger, check if $h = H_0(K^*)$. If so, set $\pw^* := \pw_i$ and break the for-loop. Otherwise move on to the next element in $D$.
+\end{enumerate}
+
+See below for a graphic illustration of steps 1--3 of $\adv$.
+\begin{figure}[H]
+\pseudocodeblock{
+P(\pw) \< \< \adv(\pw_i) \\ 
+\< \sendmessageright*{\text{EKE}} \< \\
+K \< \< K^* \\
+\< \sendmessageright*{h := H_0(K)} \< \\
+\< \< h = H_0(K^*) \\
+\< \< \text{if so, }\pw^* := \pw_i;\text{ break}
+}
+\end{figure}
+
+After the for-loop ends, $\adv$ finds the $i$ such that $\pw^* = \pw_i$ and performs the following step:
+\begin{enumerate}
+\setcounter{enumi}{3}
+  \item Send $\Test(P^i)$ to the game challenger. If the result is equal to $H(K^*)$, output 1; otherwise output 0.
+\end{enumerate}
+
+Note that {\color{blue}$\adv$ only sends a single $\Test$ command, so it only does 1 active session attack and its ``baseline'' winning probability is $1/2 + 1/2|D|$}. However, we show that $\adv$'s winning probability is in fact overwhelming:
+\begin{claim}
+The probability that $\pw^* = \pw$, i.e., $\adv$ finds the correct password, is overwhelming.
+\end{claim}
+Recall EKE has the property that the two parties' output keys are equal \emph{if and only if} their passwords match. Note that $\adv$'s steps 1--2 are exactly what an honest $P'$ would to on password $\pw_i$; therefore, if $\pw_i = \pw$ then $P$'s EKE key $K \neq K^*$, so $h = H_0(K)$ is not equal to $H_0(K^*)$ except with probability $1/2^\lambda$, causing $\adv$ to move on to the next candidate password. If $\pw_i = \pw$ then $P$'s EKE key $K = K^*$, so $h = H_0(K) = H_0(K')$, causing $\adv$ to break the for-loop and set $\pw^* := \pw_i = \pw$. Overall, $\adv$ sets $\pw^* = \pw$ except with probability up to $(|D|-1)/2^\lambda$.
+\begin{claim}
+If $\pw^* = \pw$, then $\adv$ wins with overwhelming probability.
+\end{claim}
+Suppose $b = 1$. Then when $\adv$ sends $\Test(P^i)$, the game challenger returns $P^i$'s output key $H(K)$. But if $\pw^* = \pw$ then $K^* = K$, so $H(K) = H(K^*)$ and $\adv$ outputs 1.
+
+Now suppose $b = 0$. Then when $\adv$ sends $\Test(P^i)$, the game challenger returns a uniformly random string in $\{0,1\}^\lambda$ independent of the rest of the game. Therefore, $\adv$ outputs 1 with probability $1/2^\lambda$.
+
+In sum, $\adv$ wins with probability 1 when $b = 1$ and $1-1/2^\lambda$ when $b = 0$. Its overall winning probability is $1-1/2^{\lambda+1}$.
+
+\medskip
+Combining the two claim above immediately yields that $\adv$ wins with overwhelming probability, so $\Pi$ is not KOY-secure.
+\end{proof}
+\paragraph{$\Pi$ is still BPR-secure.}
+Our attack above does not violate the BPR-security of $\Pi$. This is because the sentence in blue does not hold anymore: $\adv$ sends up to $|D|$ $\Send$ commands, so in BPR the number of active attacks is up to $|D|$ and thus $\adv$'s ``baseline'' winning probability is $1/2 + |D|/2|D| = 1$.
+
+\subsection{What Does This Entail?}
+Where do things go wrong: is the UC-security notion too weak, or is the game-based security notion too strong?
+
+The crux of the whole issue lies in how exactly an ``active attack'' is defined in the game-based security definition. There, an instance is said to be actively attacked \emph{only if there is \textbf{both} a $\Send$ command and a $\Test$ command} for this instance. In other words, if the adversary actively chooses protocol messages but does not see the attacked party's output key, then this doesn't count as an ``active attack''. However, our counterexample has the property that
+\begin{displayquote}
+\emph{The protocol transcript --- without the honest party's output key --- already leaks information about the password.}
+\end{displayquote}
+Therefore, the adversary can test a password guess --- and eventually find the correct password --- without sending a $\Test$ command (i.e., without an ``active attack''), violating game-based security.
+
+On the other hand, this property is allowed by the UC-security notion. In fact this is even \emph{intended}: in the UC PAKE functionality active attacks are modeled by the $\TestPwd$ command, from which the ideal adversary can learn whether its password guess is correct or not. This is intended to model the scenario where \emph{the adversary learns whether its password guess is correct immediately after sending the protocol message that contains the password guess, without seeing the attacked party's output key}.
+
+In other words, there is a mismatch between the two security notions regarding whether the adversary can learn whether its password guess is correct by looking at the protocol transcript only: the game-based security notion says ``no'', whereas the UC-security notion says ``yes''. Our counterexample exactly exploits this gap.
+
+We argue that the UC-security notion is the more ``natural'' way of modeling PAKE security. Indeed, what we do in our counterexample --- sending an authenticator for the counterparty to check if the login attempt has been successful --- is exactly what's done to achieve explicit authentication in PAKE, i.e., the property above is common. (The uncommon thing in our counterexample is that the receiver does not actually verify the authenticator and outputs the intended output key anyway.) Therefore, in the game-based security definition a $\Send$ command alone --- which allows the adversary to see the protocol transcript --- should already be counted as an active attack.
+
+\section{Implicit-Only UC-Security Implies KOY-Security}
+Our main result in this section is:
+\begin{theorem}
+Suppose $\Pi$ is a PAKE protocol that UC-realizes $\Fipake$. Then $\Pi$ is KOY-secure.
+\end{theorem}
+\begin{proof}
+Consider any PPT adversary $\widehat{\adv}$ in the KOY-security game for $\Pi$, and let $q$ be the number of active attacks by $\widehat{\adv}$; we want to upper-bound $\widehat{\adv}$'s winning probability. (We use $\widehat{\adv}$ instead of $\adv$ to emphasize that it is the adversary in the game-based definition, not the UC adversary.) The outline of the proof is as follows:
+\begin{enumerate}
+  \item We first ``translate'' $\widehat{\adv}$ into a UC environment $\env$ that essentially does what $\widehat{\adv}$ does during protocol execution. $\env$ outputs 1 if and only if $\widehat{\adv}$ wins.
+  \item Since $\env$ simulates the KOY-security game for $\widehat{\adv}$, the probability that $\env$ outputs 1 in the real world is equal to $\widehat{\adv}$'s winning probability.
+  \item However, in the ideal world $\widehat{\adv}$'s winning probability is limited by how much it learns about the password. But $\widehat{\adv}$ gains some information about the password only if \emph{both} (1) the simulator does a successful online attack, and (2) $\widehat{\adv}$ sees the attacked instance's output key. The number of occurrences of (1) and (2) is exactly $q$.
+  \item Therefore, $\widehat{\adv}$'s winning probability must be close to the ``baseline''.
+\end{enumerate}
+Steps 1 and 2 are essentially identical to the proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}; the main technical difficulty lies in step 3.
+\paragraph{``Translating'' $\widehat{\adv}$ into a UC environment.}
+Consider the following UC environment $\env$:
+
+\bigskip\noindent\textbf{\underline{Environment $\env$}:}
+\begin{enumerate}
+\setcounter{enumi}{-1}
+  \item Samples $b \gets \{0,1\}$ and invoke $\widehat{\adv}$.
+  \item For each pair of instances $(P^i, (P')^j)$, sample a password $\pw_{i,j} = \pw_{j,i} \gets D$.
+  \item On $\Execute(P^i, (P')^j)$ from $\widehat{\adv}$, pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, sid_{i,j}, P', \pw_{i,j})$ to $P'$ and $(\NewSession, sid_{i,j}, P, \pw_{i,j})$ to $P$. (Below we may simply write $sid$ and $\pw$ when $i,j$ are clear from the context.) Then instruct the PAKE adversary $\adv$ to be passive in this session. After the session completes, provide $\widehat{\adv}$ with its transcript. (Note that $P^i$ is an instance in the KOY-security game simulated by $\env$, whereas $P$ is a UC protocol party that interacts with $\env$.)
+  \item On $\Send(P^i, (P')^j, \text{start})$ from $\widehat{\adv}$, send $(\NewSession, sid, ssid, P', \pw)$ to $P$ (if $sid$ is undefined, pick a fresh $sid$). On $\Send((P')^i, P^i, \text{start})$ from $\widehat{\adv}$, send $(\NewSession, sid, ssid, P', \pw)$ to $P$ (if $sid$ is undefined, pick a fresh $sid$). (In this way $sid_{i,j}$ is always the sub-session ID between instances $P^i$ and $(P')^j$.) \\
+      On $\Send(P^i, (P')^j, m^*)$ from $\widehat{\adv}$, instruct the PAKE adversary $\adv$ to send a message $(sid, m^*)$ to $P'$. \\
+      In all cases above, forward the message $\adv$ receives to $\widehat{\adv}$.
+  \item On $\Reveal(P^i)$ from $\widehat{\adv}$, fetch $sid_{i,j}$ (where $j$ is the index of instance $(P')^j$ that $P^i$ interacts with). If $P$ has output $(sid_{i,j}, SK)$ to $\env$, return $SK$; otherwise return $\bot$.
+  \item $\Test(P^i)$ from $\widehat{\adv}$ is handled in the same way as $\Reveal(P^i)$, except that ``return $SK$'' is replaced by ``return $SK$ if $b = 1$ and a random string in $\{0,1\}^\lambda$ if $b = 0$''.
+  \item When $\widehat{\adv}$ outputs a bit $b^*$, output 1 if $b^* = b$ and 0 otherwise.
+\end{enumerate}
+\paragraph{Analysis in the real world.}
+If $\env$ is in the real world, then it exactly simulates $\Pi$'s KOY-security game for $\widehat{\adv}$. We have 
+\[
+\Pr[\env\text{ outputs }1\text{ in the real world}] = \Pr[b^* = b\text{ in the real world}] = \Pr[\widehat{\adv}\text{ wins}].
+\]
+\paragraph{Analysis in the ideal world.}
+Now suppose $\env$ is in the ideal world. Then 
+\end{proof}
+
+\bibliographystyle{alpha}
+\bibliography{bib.bib}
+\end{document}
