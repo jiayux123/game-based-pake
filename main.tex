@@ -23,6 +23,8 @@
 \newcommand{\group}{\mathbb{G}}
 \newcommand{\Z}{\mathbb{Z}}
 
+\newcommand{\negl}{\mathsf{negl}}
+
 \newcommand{\adv}{\mathcal{A}}
 \newcommand{\env}{\mathcal{Z}}
 \renewcommand{\sim}{\mathcal{S}}
@@ -53,9 +55,13 @@
 \newcommand{\Reveal}{\mathsf{Reveal}}
 \newcommand{\Test}{\mathsf{Test}}
 
+\newcommand{\SpuriousGuess}{\mathsf{SpuriousGuess}}
+\newcommand{\CorrectGuess}{\mathsf{CorrectGuess}}
+
 \begin{document}
 
 \section{UC-Security Does Not Imply KOY-Security}
+\label{sec:counterexample}
 \subsection{The Counterexample}
 Consider the following PAKE protocol:
 
@@ -68,7 +74,7 @@ Consider the following PAKE protocol:
 \begin{figure}[H]
 \pseudocodeblock{
 P(\pw) \< \< P'(\pw') \\ 
-\< \sendmessageright*{\text{EKE}} \< \\
+\< \sendmessagerightleft*{\text{EKE}} \< \\
 K \< \< K' \\
 \< \sendmessageright*{h := H_0(K)} \< \\
 \text{output }H(K) \< \< \text{output }H(K')
@@ -95,7 +101,7 @@ Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fp
   \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P, (SK')^*)$ to $\func$.
 \end{enumerate}
 
-We now show that $\sim$ generates an ideal-world view for $\env$ that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
+We now show that for any environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
 \begin{itemize}
   \item $\adv$ does not send a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', but
   \item $\adv$ queries $H_0(K)$ or $H(K)$.
@@ -153,7 +159,7 @@ See below for a graphic illustration of steps 1--3 of $\adv$.
 \begin{figure}[H]
 \pseudocodeblock{
 P(\pw) \< \< \adv(\pw_i) \\ 
-\< \sendmessageright*{\text{EKE}} \< \\
+\< \sendmessagerightleft*{\text{EKE}} \< \\
 K \< \< K^* \\
 \< \sendmessageright*{h := H_0(K)} \< \\
 \< \< h = H_0(K^*) \\
@@ -215,7 +221,7 @@ Consider any PPT adversary $\widehat{\adv}$ in the KOY-security game for $\Pi$, 
   \item However, in the ideal world $\widehat{\adv}$'s winning probability is limited by how much it learns about the password. But $\widehat{\adv}$ gains some information about the password only if \emph{both} (1) the simulator does a successful online attack, and (2) $\widehat{\adv}$ sees the attacked instance's output key. The number of occurrences of (1) and (2) is exactly $q$.
   \item Therefore, $\widehat{\adv}$'s winning probability must be close to the ``baseline''.
 \end{enumerate}
-Steps 1 and 2 are essentially identical to the proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}; the main technical difficulty lies in step 3.
+Steps 1 and 2 are essentially identical to the proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}; the main technical challenge lies in step 3.
 \paragraph{``Translating'' $\widehat{\adv}$ into a UC environment.}
 Consider the following UC environment $\env$:
 
@@ -224,9 +230,9 @@ Consider the following UC environment $\env$:
 \setcounter{enumi}{-1}
   \item Samples $b \gets \{0,1\}$ and invoke $\widehat{\adv}$.
   \item For each pair of instances $(P^i, (P')^j)$, sample a password $\pw_{i,j} = \pw_{j,i} \gets D$.
-  \item On $\Execute(P^i, (P')^j)$ from $\widehat{\adv}$, pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, sid_{i,j}, P', \pw_{i,j})$ to $P'$ and $(\NewSession, sid_{i,j}, P, \pw_{i,j})$ to $P$. (Below we may simply write $sid$ and $\pw$ when $i,j$ are clear from the context.) Then instruct the PAKE adversary $\adv$ to be passive in this session. After the session completes, provide $\widehat{\adv}$ with its transcript. (Note that $P^i$ is an instance in the KOY-security game simulated by $\env$, whereas $P$ is a UC protocol party that interacts with $\env$.)
+  \item On $\Execute(P^i, (P')^j)$ from $\widehat{\adv}$, pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, sid_{i,j}, P', \pw_{i,j})$ to $P'$ and $(\NewSession, sid_{i,j}, P, \pw_{i,j})$ to $P$. (Below we may simply write $sid$ and $\pw$ when $i,j$ are clear from the context.) Then instruct the UC PAKE adversary $\adv$ to be passive in this session. After the session completes, provide $\widehat{\adv}$ with its transcript. (Note that $P^i$ is an instance in the KOY-security game simulated by $\env$, whereas $P$ is a UC protocol party that interacts with $\env$.)
   \item On $\Send(P^i, (P')^j, \text{start})$ from $\widehat{\adv}$, send $(\NewSession, sid, ssid, P', \pw)$ to $P$ (if $sid$ is undefined, pick a fresh $sid$). On $\Send((P')^i, P^i, \text{start})$ from $\widehat{\adv}$, send $(\NewSession, sid, ssid, P', \pw)$ to $P$ (if $sid$ is undefined, pick a fresh $sid$). (In this way $sid_{i,j}$ is always the sub-session ID between instances $P^i$ and $(P')^j$.) \\
-      On $\Send(P^i, (P')^j, m^*)$ from $\widehat{\adv}$, instruct the PAKE adversary $\adv$ to send a message $(sid, m^*)$ to $P'$. \\
+      On $\Send(P^i, (P')^j, m^*)$ from $\widehat{\adv}$, instruct the UC PAKE adversary $\adv$ to send a message $(sid, m^*)$ to $P'$. \\
       In all cases above, forward the message $\adv$ receives to $\widehat{\adv}$.
   \item On $\Reveal(P^i)$ from $\widehat{\adv}$, fetch $sid_{i,j}$ (where $j$ is the index of instance $(P')^j$ that $P^i$ interacts with). If $P$ has output $(sid_{i,j}, SK)$ to $\env$, return $SK$; otherwise return $\bot$.
   \item $\Test(P^i)$ from $\widehat{\adv}$ is handled in the same way as $\Reveal(P^i)$, except that ``return $SK$'' is replaced by ``return $SK$ if $b = 1$ and a random string in $\{0,1\}^\lambda$ if $b = 0$''.
@@ -238,8 +244,69 @@ If $\env$ is in the real world, then it exactly simulates $\Pi$'s KOY-security g
 \Pr[\env\text{ outputs }1\text{ in the real world}] = \Pr[b^* = b\text{ in the real world}] = \Pr[\widehat{\adv}\text{ wins}].
 \]
 \paragraph{Analysis in the ideal world.}
-Now suppose $\env$ is in the ideal world. Then 
+Now suppose $\env$ is in the ideal world. Let $\sim$ be the simulator that generates a ideal-world view indistinguishable from $\env$'s real-world view. We now upper-bound $\Pr[b^* = b\text{ in the ideal world}]$.
+
+Define ``bad event''
+\begin{align*}
+\CorrectGuess : \sim\text{ sends }(\TestPwd, sid_{i,j}, P, \pw)\text{ to }\Fipake \\
+\text{where }\widehat{\adv}\text{ performs an active attack on }P^i,
+\end{align*}
+i.e., $\CorrectGuess$ happens if $\sim$ tests $\pw$ on an instance on which $\widehat{\adv}$ performs an active attack. (Intuitively, $\CorrectGuess$ happens if $\widehat{\adv}$'s protocol messages contain password guess $\pw$, which is extracted by $\sim$; and eventually $\widehat{\adv}$ learns this instance's output key.)
+\begin{claim}
+\label{clm:tested}
+Suppose $\SpuriousGuess$ does not happen. Then $\Pr[\CorrectGuess] \leq \cfrac{q}{|D|}$.
+\end{claim}
+This claim is the crux of the entire proof (and where we crucially deviate from \cite{EC:CHKLM05}). The key point is to \emph{view $\widehat{\adv}$ and $\sim$ combined as a single entity, and see what information they receive about $\pw$}. In fact there is only a single cycle through which $\widehat{\adv}$ and $\sim$ might (jointly) learn some information about $\pw$:
+\begin{enumerate}
+  \item For a certain instance, $\sim$ submits a password guess $\pw^*$ (via $\TestPwd$) and a key $K^*$ (via $\NewKey$) to $\Fipake$.
+  \item $\Fipake$ generates key $K$ which is equal to $K^*$ if $\pw^* = \pw$ and uniformly random otherwise. $\Fipake$ then sends $K$ to the UC protocol party $P$.
+  \item $P$ forwards $K$ to $\env$.
+  \item When $\widehat{\adv}$ sends a $\Reveal$ command for this instance, or a $\Test$ command in the case of $b = 1$, $\env$ returns $K$ to $\widehat{\adv}$.
+\end{enumerate}
+(Other information $\widehat{\adv}$ and $\sim$ may receive includes $\NewSession$ commands from $\Fipake$ to $\sim$, indicating that a session has begun. This message is of course independent of $\pw$. Note in particular that protocol messages $\widehat{\adv}$ receives on $\Execute$ and $\Send$ commands are in fact simulated by $\sim$: upon receiving such a command, $\env$ lets $\sim$ simulate protocol messages for the UC PAKE adversary $\adv$, which $\env$ forwards to $\widehat{\adv}$. Therefore, {\color{blue}when we view $\widehat{\adv}$ and $\sim$ jointly, $\Execute$ and $\Send$ commands (without $\Reveal$ or $\Test$) provide no information about $\pw$}.)
+
+We now call steps 1--4 above a ``cycle''. In short, the game becomes: $\{\widehat{\adv}, \sim\}$ specifies $\pw^* \in D$ and $K^*$, and receives $K^*$ if $\pw^* = \pw$ and a uniformly random $K$ otherwise. $\CorrectGuess$ is triggered when $\{\widehat{\adv}, \sim\}$ specifies $\pw$. In each cycle the only information $\{\widehat{\adv}, \sim\}$ learns about $\pw$ is whether $\pw^* = \pw$, so $\Pr[\CorrectGuess]$ is upper-bounded by $\text{(number of cycles)}/|D|$.
+
+How many cycles can $\{\widehat{\adv}, \sim\}$ complete? First, $\widehat{\adv}$ must send a $\Reveal$ or a $\Test$ command on this instance (otherwise $\{\widehat{\adv}, \sim\}$ does not learn $K$ and thus learns no information about $\pw$). Second, if $\SpuriousGuess$ does not happen then this session must be a $\Send$ session (otherwise $\sim$ does not even send a $\TestPwd$ command, i.e., $\{\widehat{\adv}, \sim\}$ does not even specify $\pw^*$). But a cycle that satisfies these conditions is exactly an active attack. Therefore, the number of cycles is at most $q$.
+
+We conclude that
+\[
+\Pr[\CorrectGuess] \leq \frac{\text{number of cycles}}{|D|} \leq \frac{q}{|D|}.
+\]
+\begin{claim}
+Suppose again $\SpuriousGuess$ does not happen. If $\CorrectGuess$ also does not happen, then $b^* = b$ with probability $1/2$.
+\end{claim}
+Consider the instance for which $\widehat{\adv}$ sends $\Test$. If it is an $\Execute$ instance, then $\sim$ does not send $\TestPwd$ (because $\SpuriousGuess$ does not happen), so this session is $\fresh$ and outputs a uniformly random key. If it is a $\Send$ instance, then this instance is actively attacked, so $\sim$ does not send $\TestPwd$ on the correct password (because $\CorrectGuess$ does not happen), so this session is $\fresh$ or $\interrupted$ and outputs a uniformly random key. This means that $b$ is independent of $\widehat{\adv}$'s view, so $\Pr[b^* = b] = 1/2$.
+
+Combining the two claims above, we get
+\begin{align*}
+&\Pr[\env\text{ outputs }1\text{ in the real world}] \\
+\leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[b^* = b \land \overline{\CorrectGuess} \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
+\leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \frac{1}{2}(1 - \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}]) + \Pr[\SpuriousGuess] \\
+=& \frac{1}{2} + \frac{1}{2}\Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
+\leq& \frac{1}{2} + \frac{1}{2|D|} + \Pr[\SpuriousGuess] \\
+\leq& \frac{1}{2} + \frac{1}{2|D|} + \negl,
+\end{align*}
+where the last inequality is due to \Cref{lem:spuriousguess}.
+\paragraph{Putting it together.}
+In sum, $\env$'s distinguishing advantage is at least
+\[
+\Pr[\widehat{\adv}\text{ wins}] - \frac{1}{2} - \frac{1}{2|D|} - \negl,
+\]
+which is negligible since $\Pi$ UC-realizes $\Fipake$. So
+\[
+\Pr[\widehat{\adv}\text{ wins}] \geq \frac{1}{2} + \frac{1}{2|D|} + \negl,
+\]
+completing the proof.
 \end{proof}
+\paragraph{Recovering the UC-security $\Rightarrow$ BPR-security proof.} One might ask where the proof breaks down if $\Pi$ only realizes $\Fpake$. The reason is that the statement in blue does not hold anymore, as there is another cycle that allows the combination of $\widehat{\adv}$ and $\sim$ to learn some information about $\pw$:
+\begin{enumerate}
+  \item For a certain instance, $\sim$ submits a password guess $\pw^*$ (via $\TestPwd$) to $\Fpake$.
+  \item $\Fpake$ returns ``correct/wrong guess'' to $\sim$.
+\end{enumerate}
+Crucially, this cycle does not require $\adv$ to send $\Reveal$ or $\Test$, i.e., $\sim$ can ``help'' $\widehat{\adv}$ gain some information about $\pw$ without $\widehat{\adv}$ performing an active attack (per the KOY notion). This is exactly what our counterexample in \Cref{sec:counterexample} exploits.
+
+On the other hand, if we take the BPR notion (where a $\Send$ command already counts as an active attack), then the cycle above still requires an active attack (assuming $\SpuriousGuess$ does not happen). In this way we recover the security proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}.
 
 \bibliographystyle{alpha}
 \bibliography{bib.bib}
