@@ -60,6 +60,15 @@
 
 \begin{document}
 
+\title{Does the UC-Security Notion of PAKE \\ Imply Game-Based Security?}
+
+\author{Jiayu Xu}
+\affil{Oregon State University \\ \texttt{xujiay@oregonstate.edu}}
+\date{}
+
+\maketitle
+
+
 \section{UC-Security Does Not Imply KOY-Security}
 \label{sec:counterexample}
 \subsection{The Counterexample}
@@ -278,24 +287,25 @@ Suppose again $\SpuriousGuess$ does not happen. If $\CorrectGuess$ also does not
 \end{claim}
 Consider the instance for which $\widehat{\adv}$ sends $\Test$. If it is an $\Execute$ instance, then $\sim$ does not send $\TestPwd$ (because $\SpuriousGuess$ does not happen), so this session is $\fresh$ and outputs a uniformly random key. If it is a $\Send$ instance, then this instance is actively attacked, so $\sim$ does not send $\TestPwd$ on the correct password (because $\CorrectGuess$ does not happen), so this session is $\fresh$ or $\interrupted$ and outputs a uniformly random key. This means that $b$ is independent of $\widehat{\adv}$'s view, so $\Pr[b^* = b] = 1/2$.
 
+\medskip
 Combining the two claims above, we get
 \begin{align*}
 &\Pr[\env\text{ outputs }1\text{ in the real world}] \\
 \leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[b^* = b \land \overline{\CorrectGuess} \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
 \leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \frac{1}{2}(1 - \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}]) + \Pr[\SpuriousGuess] \\
 =& \frac{1}{2} + \frac{1}{2}\Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
-\leq& \frac{1}{2} + \frac{1}{2|D|} + \Pr[\SpuriousGuess] \\
-\leq& \frac{1}{2} + \frac{1}{2|D|} + \negl,
+\leq& \frac{1}{2} + \frac{q}{2|D|} + \Pr[\SpuriousGuess] \\
+\leq& \frac{1}{2} + \frac{q}{2|D|} + \negl,
 \end{align*}
 where the last inequality is due to \Cref{lem:spuriousguess}.
 \paragraph{Putting it together.}
 In sum, $\env$'s distinguishing advantage is at least
 \[
-\Pr[\widehat{\adv}\text{ wins}] - \frac{1}{2} - \frac{1}{2|D|} - \negl,
+\Pr[\widehat{\adv}\text{ wins}] - \frac{1}{2} - \frac{q}{2|D|} - \negl,
 \]
 which is negligible since $\Pi$ UC-realizes $\Fipake$. So
 \[
-\Pr[\widehat{\adv}\text{ wins}] \geq \frac{1}{2} + \frac{1}{2|D|} + \negl,
+\Pr[\widehat{\adv}\text{ wins}] \geq \frac{1}{2} + \frac{q}{2|D|} + \negl,
 \]
 completing the proof.
 \end{proof}
@@ -304,9 +314,9 @@ completing the proof.
   \item For a certain instance, $\sim$ submits a password guess $\pw^*$ (via $\TestPwd$) to $\Fpake$.
   \item $\Fpake$ returns ``correct/wrong guess'' to $\sim$.
 \end{enumerate}
-Crucially, this cycle does not require $\adv$ to send $\Reveal$ or $\Test$, i.e., $\sim$ can ``help'' $\widehat{\adv}$ gain some information about $\pw$ without $\widehat{\adv}$ performing an active attack (per the KOY notion). This is exactly what our counterexample in \Cref{sec:counterexample} exploits.
+Crucially, this cycle does not require $\widehat{\adv}$ to send $\Reveal$ or $\Test$, i.e., $\sim$ can ``help'' $\widehat{\adv}$ gain some information about $\pw$ without $\widehat{\adv}$ performing an active attack (per the KOY notion). This is exactly what our counterexample in \Cref{sec:counterexample} exploits.
 
-On the other hand, if we take the BPR notion (where a $\Send$ command already counts as an active attack), then the cycle above still requires an active attack (assuming $\SpuriousGuess$ does not happen). In this way we recover the security proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}.
+On the other hand, if we take the BPR notion (where a $\Send$ command already counts as an active attack), then the cycle above still requires an active attack (assuming $\SpuriousGuess$ does not happen) and the rest of the proof still goes through. In this way we recover the security proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}.
 
 \bibliographystyle{alpha}
 \bibliography{bib.bib}
