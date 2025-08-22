@@ -19,6 +19,7 @@
 \tmp{link}{HTML}{800006}
 \tmp{cite}{HTML}{2E7E2A} % better default colors for hyperref links; see https://tex.stackexchange.com/a/525297
 \usepackage[capitalise]{cleveref}
+\usepackage{tikz-cd}
 
 \newcommand{\group}{\mathbb{G}}
 \newcommand{\Z}{\mathbb{Z}}
@@ -88,6 +89,24 @@ In this work, we present a thorough study of KOY- and implicit-only UC-security 
   \item In \Cref{sec:counterexample} we show that UC-security does \emph{not} imply KOY-security, by giving a concrete counterexample that is UC-secure but not KOY-secure;
   \item In \Cref{sec:implicit-only} we show that implicit-only UC-security implies KOY-security. Furthermore, by examining our proof, one can easily recover the standard proof that UC-security implies BPR-security.
 \end{enumerate}
+\usetikzlibrary{decorations.markings}
+\tikzset{negated/.style={
+        decoration={markings,
+            mark= at position 0.5 with {
+                \node[transform shape] (tempnode) {$\backslash$};
+            }
+        },
+        postaction={decorate}
+    }
+}
+\begin{figure}[H]
+\begin{center}
+\begin{tikzcd}[row sep = 8ex, column sep = 8ex]
+\text{implicit-only UC} \arrow{r} \arrow{d}[swap]{\text{\Cref{sec:implicit-only}}} & \text{UC} \arrow{d}{\text{\cite{EC:CHKLM05}}} \arrow[negated]{dl}{\text{\Cref{sec:counterexample}}} \\
+\text{KOY} \arrow{r} & \text{BPR}
+\end{tikzcd}
+\end{center}
+\end{figure}
 Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their more standard counterparts in the same way, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
 
 As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
@@ -215,6 +234,19 @@ Finally, a $\NewKey$ command allows an instance to complete and output its key. 
   \item If both the current instance and its counterparty's instance are $\fresh$, i.e., the adversary is passive between two instances, and their passwords match, then these two instances should output the same random key. Formalizing this is a little cumbersome: if $P'$ outputs before $P$ does, then $P'$ should output a random key independent of everything else (a subcase of the third bullet), and when $P$ outputs later, its key should be equal to $P'$'s key (the second bullet).
   \item In all other cases, the instance's output key should be independent of everything else (the third bullet).
 \end{itemize}
+\begin{figure}[H]
+\begin{center}
+$
+\begin{array}{c c c c c}
+\NewSession & \longrightarrow & \TestPwd & \longrightarrow & \NewKey \\
+\\
+\fresh & \longrightarrow & \compromised & \longrightarrow & \completed \\
+ & & \text{or }\interrupted & &
+\end{array}
+$
+\end{center}
+\caption{``Life cycle'' of an instance. $\TestPwd$ can be skipped}
+\end{figure}
 \paragraph{Comparison with game-based definitions.}
 Both game-based and UC-security definitions formalize the two principles in \Cref{sec:principles}. However, they do so in very different ways.
 
@@ -325,7 +357,7 @@ P(\pw) \< \< \adv(\pw_i) \\
 \< \sendmessagerightleft*{\text{EKE}} \< \\
 K \< \< K^* \\
 \< \sendmessageright*{h := H_0(K)} \< \\
-\< \< h := H_0(K^*) \\
+\< \< h \stackrel{?}= H_0(K^*) \\
 \< \< \text{if so, }\pw^* := \pw_i;\text{ break}
 }
 \end{figure}
@@ -475,4 +507,4 @@ On the other hand, if we take the BPR notion (where a $\Send$ command already co
 
 \bibliographystyle{alpha}
 \bibliography{bib.bib}
-\end{document}
+\end{document} 
