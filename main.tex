@@ -90,7 +90,7 @@ In this work, we present a thorough study of KOY- and implicit-only UC-security 
 \end{enumerate}
 Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their more standard counterparts in the same way, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
 
-As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work can also be viewed as a survey of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
+As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
 
 \paragraph{A personal anecdote: how did I dig out KOY-security?}
 I learned game-based PAKE security definitions ``backwards''. For a very long time, KOY-security was the standard reference for me, and I had no idea that KOY and BPR were actually different. Very recently, I needed to prove a generalization of UC-security $\Rightarrow$ game-based security, and I just couldn't make the proof go through. After some thought, I realized that the ``theorem'' I tried to prove was actually wrong --- similar to the counterexample in \Cref{sec:counterexample} --- and you needed to tweak the game-based security definition to make the proof work.
@@ -104,7 +104,7 @@ I decided to write down my counterexample. During this process, I realized that 
 Let $\lambda$ be the security parameter. Most notations in this work are standard: for example, $x \gets S$ means sampling an element $x$ uniformly at random from set $S$; $x := a$ means assigning value $a$ to variable $x$; PPT means ``probabilistic polynomial-time''; and $\negl$ denotes a negligible function in $\lambda$. We assume the reader is familiar with the UC framework \cite{FOCS:Canetti01}.
 \subsection{Overview of Security Definitions for PAKE}
 \label{sec:principles}
-We first give an informal, high-level overview of the ideas behind the security definitions for PAKE; what's said in this section applies to both the game-based and UC-security definitions.
+We first give an informal, high-level overview of the ideas behind the security definitions for PAKE; what's said in this section applies to both the game-based and UC-security definitions. A few paragraphs in this section and \Cref{sec:UC} are taken almost verbatim from \Cref{EPRINT:Xu25}.
 
 Any reasonable security definition for PAKE must formalize the following two principles:
 \begin{framed}
@@ -131,7 +131,7 @@ We will see that the above forms the core of both the game-based and UC definiti
 \paragraph{Setup.}
 The system consists of a number of protocol parties $P$, and each party can have a number of instances $P^i$. An instance can send protocol messages to an instance that belongs to another party.
 
-Let $D$ be the set of all candidate passwords (the ``dictionary''); we assume $D$ has polynomial size and is public. For each pair of instances $(P^i, (P')^j)$, sample $\pw_{i,j} = \pw_{j,i} \gets D$ as the shared password between them.\footnote{We write $P^i$ and $(P')^j$ to stress that if two instances want to communicate, they must belong to different parties. Both \cite{EC:BelPoiRog00} and \cite{JACM:KatOstYun09} partition all parties into two categories, clients and servers, and a client instance must communicate with a server instance (and vice versa). Our treatment is slightly more general (e.g., it allows Alice to be a client while talking to Bob and a server while talking to Carol).} (Note that we do not consider the case where the two instances hold different passwords.)
+Let $D$ be the set of all candidate passwords (the ``dictionary''); we assume $|D| \geq 2$ and is polynomial, and $D$ is public. For each pair of instances $(P^i, (P')^j)$, sample $\pw_{i,j} = \pw_{j,i} \gets D$ as the shared password between them.\footnote{We write $P^i$ and $(P')^j$ to stress that if two instances want to communicate, they must belong to different parties. Both \cite{EC:BelPoiRog00} and \cite{JACM:KatOstYun09} partition all parties into two categories, clients and servers, and a client instance must communicate with a server instance (and vice versa). Our treatment is slightly more general (e.g., it allows Alice to be a client while talking to Bob and a server while talking to Carol).} (Note that we do not consider the case where the two instances hold different passwords.)
 
 \paragraph{Protocol execution.}
 The security notion for PAKE is formalized as a game between a PPT adversary $\adv$ and a game challenger, where the challenger runs the protocol parties (and their instances) and sends to $\adv$ certain information that $\adv$ is supposed to learn during an attack. Concretely, $\adv$ can send the following commands to the game challenger:
@@ -151,7 +151,7 @@ We still need to decide whether $\adv$ wins the game. Similar to the security de
 \begin{itemize}
   \item $\Test(P^i)$ --- The game challenger samples a bit $b \gets \{0,1\}$. If $P^i$ has computed its output key $K_i$ and $b = 1$, the game challenger returns $K_i$ to $\adv$; if $P^i$ has computed its output key $K_i$ and $b = 0$, the game challenger returns a uniformly random string in $\{0,1\}^\lambda$ to $\adv$; otherwise the game challenger returns $\bot$ to $\adv$. The $\Test$ command can be sent only once.
 \end{itemize}
-At the end of the game, $\adv$ outputs a bit $b^*$ and wins if $b^* = b$. (Note that the single $\Test$ command is the only place where $b$ is actually used in the game.)
+At the end of the game, $\adv$ outputs a bit $b^*$ and wins if $b^* = b$.
 
 If we stop here then there are a few ways for $\adv$ to win trivially, which we must disallow:
 \begin{enumerate}
@@ -159,7 +159,7 @@ If we stop here then there are a few ways for $\adv$ to win trivially, which we 
   \item If $\adv$ sends $\Execute(P^i, (P')^j)$, then $P^i$ and $(P')^j$'s output keys are the same. Then if $\adv$ $\Reveal$s one of them and $\Test$s the other, then again $b = 1$ if and only if they return the same result.
   \item Note that $\Reveal$ is not the only way for $\adv$ to be passive: if both $P^i$ and $(P')^j$ are $\Send$ instances, and their views are identical (i.e., $\adv$ forwards all messages between them via $\Send$ commands), then $P^i$ and $(P')^j$'s output keys are again the same. If $\adv$ $\Reveal$s one of them and $\Test$s the other, then $b = 1$ if and only if they return the same result.\footnote{This does not consider the case where $\adv$ is ``effectively passive'' by merely modifying the \emph{format} of protocol messages. For example, if the protocol message contains a bit $\mathsf{bit}$ that is ignored by the receiver, then $\adv$ can flip $\mathsf{bit}$ while transmitting this message; this should be treated as if $\adv$ is passive. We do not consider such degenerate cases, as they are inconsequential to our main results; for how to talk about such cases formally, see the discussion about ``session ID'' (not to be confused with the session ID in the UC framework) in \cite{EC:BelPoiRog00,JACM:KatOstYun09}.}
 \end{enumerate}
-We need to disallow all these behaviors, i.e., we only quantify over all PPT adversaries that do not do any of 1--3 above.\footnote{\cite{EC:BelPoiRog00,JACM:KatOstYun09} define two instances to be \emph{partnered} if their transcripts are the same. Then 1--3 above can be succinctly stated as: For the instance that $\adv$ $\Test$s, $\adv$ cannot $\Reveal$ either the instance itself or its partner, no matter whether $\Reveal$ happens first or $\Test$ happens first.}
+We need to prohibit all these behaviors, i.e., we only quantify over all PPT adversaries that do not do any of 1--3 above.\footnote{\cite{EC:BelPoiRog00,JACM:KatOstYun09} define two instances to be \emph{partnered} if their transcripts are the same. Then 1--3 above can be succinctly stated as: For the instance that $\adv$ $\Test$s, $\adv$ cannot $\Reveal$ either the instance itself or its partner, no matter whether $\Reveal$ happens first or $\Test$ happens first.}
 
 Note that 2 and 3 above exactly reflect the second principle in \Cref{sec:principles}: if $\adv$ is passive between $P^i$ and $(P')^j$, then their output keys will be the same, and we need to place some restrictions on what $\adv$ can $\Test$. PAKE security should mean that except for these cases, the instances' output keys should be uniformly random and independent of everything else, so $\adv$ can $\Test$ any one of them and the real key should be indistinguishable from a random string --- unless $\adv$ succeeds in an online attack, which we define next.
 \paragraph{The ``baseline'' winning probability.}
@@ -167,15 +167,62 @@ The last piece of the definition is to define $\adv$'s ``baseline'' winning prob
 
 But when exactly is an instance ``online attacked''? This is where BPR- and KOY-security diverge. To begin with, if the instance is not even used (i.e., initiated) then of course there is no way to attack it. For an $\Execute$ instance, since $\adv$ is passive there and merely sees the transcript, that should not count as an online attack either.\footnote{This implies an important security property for PAKE: a PAKE protocol should be resilient to ``offline dictionary attacks'', i.e., a protocol transcript that the adversary passively observes should not tell the adversary any information about the password. For example, $H(\pw)$ (where $H$ is an RO) cannot be used as a protocol message.}
 
-This leaves $\Send$ instances. {\color{red}In BPR-security, all $\Send$ instances are considered online attacked}; {\color{blue}in KOY-security, a $\Send$ instance is attacked only if $\adv$ also $\Reveal$s or $\Test$s it}. (The reader should pause a bit here and think about what this difference actually means; it should become clear after seeing the counterexample in \Cref{sec:counterexample}, and we reveal our understanding in \Cref{sec:conclusion}.) With the concept of ``online attacks'' defined, we can finally state our security definition for PAKE.
+This leaves $\Send$ instances. {\color{red}In BPR-security, all $\Send$ instances are considered online attacked}; {\color{blue}in KOY-security, a $\Send$ instance is online attacked only if $\adv$ also $\Reveal$s or $\Test$s it}. (The reader should pause a bit here and think about what this difference actually means; it should become clear after seeing the counterexample in \Cref{sec:counterexample}, and we reveal our understanding in \Cref{sec:conclusion}.) With the concept of ``online attacks'' defined, we can finally state our security definition for PAKE.
 \begin{definition}
 A PAKE protocol is \emph{\textsf{BPR-secure/KOY-secure}} if for any PPT adversary $\adv$ that does not perform any of the prohibited behaviors 1--3 above,
 \[
 \Pr[\adv\text{ wins}] \leq \frac{1}{2} + \frac{q}{2|D|} + \negl,
 \]
-where $q$ is the upper bound of the number of instances that are online attacked.\footnote{The number of online attacks is a random variable depending on $\adv$ and the game challenger's random coins. We let $q$ be the maximum value rather than the expected value, which is standard in cryptography and much easier to argue about.} The definition of an ``online attacked instance'' is the red text above for BPR-security and the blue text above for KOY-security.
+where $q$ is the upper bound of the number of instances that are online attacked. The definition of an ``online attacked instance'' is the red text above for BPR-security and the blue text above for KOY-security.
 \end{definition}
-We stress that the security game for BPR- and KOY-security is exactly the same; the only difference lies in what counts as an ``online attack'', which in turn affects the ``baseline'' winning probability.
+We stress that the security game for BPR- and KOY-security is exactly the same; the only difference lies in what counts as an ``online attack'', which in turn affects the ``baseline'' winning probability. KOY-security is stronger because it places more restrictions on ``online attacks'', causing $q$ --- hence the ``baseline'' winning probability --- to be potentially lower (so it is easier for $\adv$ to ``break'' the protocol).
+\subsection{UC- And Implicit-Only UC-Security Definitions for PAKE}
+\label{sec:UC}
+UC-security definitions are done via a functionality that defines the ideal adversary's (a.k.a. the simulator's) interface. See the UC- and implicit-only UC functionalities for PAKE in \Cref{fig:pake-func}.
+\begin{figure}[H]
+\begin{framed}
+\begin{small}
+\begin{itemize}
+  \item On input $(\NewSession, sid, P, P', \pw)$ from $P$, send $(\NewSession, sid, P, P')$ to $\adv^*$. Furthermore, if this is the first $\NewSession$ message for $sid$, or this is the second $\NewSession$ message for $sid$ and there is a record $\left<P',P,\star\right>$, then store $\left<P,P',\pw\right>$ and mark it $\fresh$.
+  \item On $(\TestPwd, sid, P, \pw^*)$ from $\adv^*$, if there is a record $\left<P,P',\pw\right>$ marked $\fresh$, then do: \quad \textcolor[gray]{0.5}{// $\pw$ is $P$'s password}
+      \begin{itemize}
+        \item If $\pw^* = \pw$, then mark the record $\compromised$ {\color{red}and send ``correct guess'' to $\adv^*$}.
+        \item If $\pw^* \neq \pw$, then mark the record $\interrupted$ {\color{red}and send ``wrong guess'' to $\adv^*$}.
+      \end{itemize}
+        \item On $(\NewKey, sid, P, K^* \in \{0,1\}^\lambda)$ from $\adv^*$, if there is a record $\left<P,P',\pw\right>$, and this is the first $\NewKey$ message for $sid$ and $P$, then output $(sid, K)$ to $P$, where $K$ is defined as follows:
+            \begin{itemize}
+              \item If the record is $\compromised$, then set $K := K^*$.
+              \item If the record is $\fresh$, a key $(sid, K')$ has been output to $P'$, at which time there was a record $\left<P',P,\pw\right>$ marked $\fresh$, then set $K := K'$. \quad \textcolor[gray]{0.5}{// if no attack in this session, and passwords match, then keys should also match}
+              \item Otherwise sample $K \gets \{0,1\}^\lambda$.
+            \end{itemize}
+            Finally, mark the record $\completed$. \quad \textcolor[gray]{0.5}{// cannot send $\TestPwd$ after instance completes}
+    \end{itemize}
+\end{small}
+\end{framed}
+\caption{UC PAKE functionality $\Fpake$ (with red text) and implicit-only UC PAKE functionality $\Fipake$ (red text omitted)}
+\label{fig:pake-func}
+\end{figure}
+
+In the UC functionalities, party $P$'s instance is represented by the record $\left<P,P',\pw\right>$, where $P'$ is $P$'s counterparty and $\pw$ is $P$'s password. A $\NewSession$ command initiates an instance; each session has two instances, so we allow a $\NewSession$ command that initiates the $\left<P,P',\pw\right>$ instance and another $\NewSession$ command that initiates the $\left<P',P,\pw'\right>$ instance. Note that $P$ and $P'$'s passwords might be different.
+
+Online guessing attacks are modeled by the $\TestPwd$ command, in which the ideal adversary specifies an instance and a password guess. Crucially, a $\TestPwd$ command can be sent only when the instance is $\fresh$, and once such a command is sent, the instance will become $\compromised$ or $\interrupted$ (depending on whether the password guess is correct) and never return to $\fresh$. (Think of $\fresh$ as a shorthand for ``unattacked'', $\compromised$ as ``successfully attacked'', and $\interrupted$ as ``unsuccessfully attacked''.) In this way, it is guaranteed that at most one $\TestPwd$ command can be sent per instance: this is how the UC functionality reflects the first principle in \Cref{sec:principles}.
+
+$\TestPwd$ is also where the UC- and implicit-only UC-security definitions differ: in UC the ideal adversary knows whether its password guess is correct or not, whereas in implicit-only UC it doesn't. We will discuss what this entails in \Cref{sec:conclusion}. Clearly, implicit-only UC-security is stronger than UC-security, as the simulator has less power in the former (making the simulation potentially harder).
+
+Finally, a $\NewKey$ command allows an instance to complete and output its key. How this output key is generated exactly reflects the second principle in \Cref{sec:principles}:
+\begin{itemize}
+  \item If the instance is $\compromised$, i.e., the adversary has succeeded in an online attack, then all security guarantees for this instance are lost. In this case, we simply let the ideal adversary set the output key (the first bullet).
+  \item If both the current instance and its counterparty's instance are $\fresh$, i.e., the adversary is passive between two instances, and their passwords match, then these two instances should output the same random key. Formalizing this is a little cumbersome: if $P'$ outputs before $P$ does, then $P'$ should output a random key independent of everything else (a subcase of the third bullet), and when $P$ outputs later, its key should be equal to $P'$'s key (the second bullet).
+  \item In all other cases, the instance's output key should be independent of everything else (the third bullet).
+\end{itemize}
+\paragraph{Comparison with game-based definitions.}
+Both game-based and UC-security definitions formalize the two principles in \Cref{sec:principles}. However, they do so in very different ways.
+
+The game-based definitions reflect the first principle in the ``baseline'' winning probability: an online attack should only increase the adversary's advantage by $1/|D|$. In contrast, the UC definition directly lets the ideal adversary specify a password guess while doing an online attack, and the ideal adversary can send at most one $\TestPwd$ command per instance (subsequent such commands will be ignored).
+
+For the second principle, the technical challenge is to rule out the special cases where output key correlation is inevitable. The game-based definitions prohibit the adversary from $\Reveal$ing one instance and $\Test$ing its counterparty's instance, if the adversary is passive between the two instances; as for successfully attacked instances, the definition simply ``gives up'' and allows the adversary to win (because this possibility is already covered by the ``baseline'' winning probability). The UC definitions again reflect this principle explicitly: the ``successfully attacked instances'' are handled in the first bullet under $\NewKey$, and the ``passive adversary'' is handled in the second bullet.
+
+Finally, the game-based definitions always assume the two instances that connect to each other have the same password, whereas the UC definitions allow the two parties to have different passwords. In particular, what will happen if the adversary is passive between two instances with different passwords? The game-based definitions do not consider this situation, whereas the UC definitions specify that the two instances' output keys must be independently random in this case.
 \section{UC-Security Does Not Imply KOY-Security}
 \label{sec:counterexample}
 \subsection{The Counterexample}
@@ -278,7 +325,7 @@ P(\pw) \< \< \adv(\pw_i) \\
 \< \sendmessagerightleft*{\text{EKE}} \< \\
 K \< \< K^* \\
 \< \sendmessageright*{h := H_0(K)} \< \\
-\< \< h = H_0(K^*) \\
+\< \< h := H_0(K^*) \\
 \< \< \text{if so, }\pw^* := \pw_i;\text{ break}
 }
 \end{figure}
