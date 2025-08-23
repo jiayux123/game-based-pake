@@ -65,16 +65,18 @@
 
 \begin{document}
 
-\title{Does the UC-Security Notion for PAKE \\ Imply Game-Based Security?}
+\title{Does the UC-Security Notion for PAKE \\ Imply Game-Based Security?
+\thanks{The \texttt{.tex} code of this paper can be found at \url{https://github.com/jiayux123/game-based-pake}.}
+}
 
 \author{Jiayu Xu}
-\affil{Oregon State University \\ \texttt{xujiay@oregonstate.edu}}
+\affil{Oregon State University, \texttt{xujiay@oregonstate.edu}}
 \date{}
 
 \maketitle
 
 \begin{abstract}
-A Password-Authenticated Key Exchange (PAKE) protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy ``password''. The two standard security definitions are the game-based one by Bellare, Pointcheval and Rogaway (BPR-security, EUROCRYPT 2000) and the Universally Composable (UC) one by Canetti et al. (EUROCRYPT 2005). It is well-known that UC-security implies BPR-security; however, there are a large number of variants of both definitions, and the relation between them is not entirely clear.
+A Password-Authenticated Key Exchange (PAKE) protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy ``password''. The two standard security definitions for PAKE are the game-based one by Bellare, Pointcheval and Rogaway (BPR-security, EUROCRYPT 2000) and the Universally Composable (UC) one by Canetti et al. (EUROCRYPT 2005). It is well-known that UC-security implies BPR-security; however, there are a large number of variants of both definitions, and the relation between them is not entirely clear.
 
 In this work, we thoroughly study a variant of BPR-security by Katz, Ostrovsky and Yung (KOY-security, JACM 2009):
 \begin{enumerate}
@@ -84,22 +86,22 @@ In this work, we thoroughly study a variant of BPR-security by Katz, Ostrovsky a
 Interestingly, we make the observation that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner. We also present detailed explanations of all four security notions.
 \end{abstract}
 \section{Introduction}
-A \emph{Password-Authenticated Key Exchange (PAKE)} protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy string called the password. Crucially, such a protocol must be secure against man-in-the-middle adversaries that can arbitrarily modify the protocol messages. One common attack on PAKE is \emph{online guessing}, in which the adversary chooses a candidate password $\pw^*$ and impersonates Bob to Alice; if Alice's password is indeed $\pw^*$, then the adversary learns Alice's output key. Since passwords have low entropy, the adversary has a non-negligible probability of guessing Alice's password correctly; at a high level security for PAKE requires that online guessing is the only feasible attack.
+A \emph{Password-Authenticated Key Exchange (PAKE)} protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy string called the password. Crucially, such a protocol must be secure against man-in-the-middle adversaries that can arbitrarily modify protocol messages. One common attack on PAKE is \emph{online guessing}, in which the adversary chooses a candidate password $\pw^*$ and impersonates Bob to Alice; if Alice's password is indeed $\pw^*$, then the adversary learns Alice's output key. Since passwords have low entropy, the adversary has a non-negligible probability of guessing Alice's password correctly; at a high level, security for PAKE requires that online guessing is the only feasible attack.
 
-While the intuition of PAKE security looks simple and innocuous, a formal security definition proves incredibly difficult. There are two such definitions considered standard by the community: the game-based security notion by Bellare, Pointcheval and Rogaway \cite{EC:BelPoiRog00} (henceforth \emph{BPR-security}), and the Universally Composable (UC) security notion by Canetti et al. \cite{EC:CHKLM05} (henceforth \emph{UC-security}). Both definitions take pages to describe and explain, and contain various subtleties that are confusing to beginners and understudied by the community. A standard result \cite[Appendix~A]{EC:CHKLM05} shows that UC-security implies BPR-security.
+While the intuition of PAKE security looks simple and innocuous, a formal security definition proves incredibly difficult. There are two such definitions that are considered standard: the game-based security notion by Bellare, Pointcheval and Rogaway \cite{EC:BelPoiRog00} (henceforth \emph{BPR-security}), and the Universally Composable (UC) security notion by Canetti et al. \cite{EC:CHKLM05} (henceforth \emph{UC-security}). Both definitions take pages to describe and explain, and contain various subtleties that are confusing to beginners and understudied by the community. A standard result \cite[Appendix~A]{EC:CHKLM05} shows that UC-security implies BPR-security.
 
 Over the years, a large number of variants of both BPR- and UC-security have been proposed. While many of these are essentially tailoring the definition to fit a specific protocol construction, some do have an intuitive interpretation and capture certain nuances of PAKE security. This work focuses on two of them:
 \begin{itemize}
-  \item The variant of BPR-security by Katz, Ostrovsky and Yung \cite{JACM:KatOstYun09} (henceforth \emph{KOY-security}), which places more constraints on what exactly counts as an ``active online attack''; and
+  \item The variant of BPR-security by Katz, Ostrovsky and Yung \cite{JACM:KatOstYun09} (henceforth \emph{KOY-security}), which places more constraints on what exactly counts as an ``online attack''; and
   \item The variant of UC-security by Dupont et al. \cite{EC:DHPRY18} called \emph{implicit-only UC-security}, which disallows the ideal adversary from learning whether an online attack has succeeded or not.
 \end{itemize}
-Neither of the aforementioned works' main focus was security notions. The conference proceedings version of the KOY paper \cite{EC:KatOstYun01} proposed a new PAKE protocol and proved its BPR-security; in the journal version \cite{JACM:KatOstYun09} KOY proved that their protocol actually satisfies the stronger KOY-security, although the difference between these two notions was left unexplained. Implicit-only UC-security was introduced because the authors of \cite{EC:DHPRY18} used PAKE to construct some higher-level protocols, and the underlying PAKE needs this stronger security notion for the higher-level protocol to be secure. Perhaps this explains why these two security notions are not widely used: we do not know of any studies of either KOY- or implicit-only UC-security per se, and subsequent works generally continued to use BPR- and UC-security.
+Neither of the aforementioned works' main focus was on security notions. The conference proceedings version of the KOY paper \cite{EC:KatOstYun01} proposed a new PAKE protocol and proved its BPR-security; in the journal version \cite{JACM:KatOstYun09} KOY proved that their protocol actually satisfies the stronger KOY-security, although the difference between these two notions was left unexplained. Implicit-only UC-security was introduced because the authors of \cite{EC:DHPRY18} used PAKE to construct what's called fuzzy PAKE, and the underlying PAKE needs to satisfy this stronger security notion for their fuzzy PAKE protocols to be secure. Perhaps this explains why these two security notions are not widely used: we do not know of any studies of either KOY- or implicit-only UC-security per se, and subsequent works generally continued to use BPR- and UC-security.
 
 \paragraph{Our contributions.}
 In this work, we present a thorough study of KOY- and implicit-only UC-security for PAKE, and draw some interesting connections between them and their more standard counterparts. Our technical contributions are two-fold:
 \begin{enumerate}
   \item In \Cref{sec:counterexample} we show that UC-security does \emph{not} imply KOY-security, by giving a concrete counterexample that is UC-secure but not KOY-secure;
-  \item In \Cref{sec:implicit-only} we show that implicit-only UC-security implies KOY-security. Furthermore, by examining our proof, one can easily recover the standard proof that UC-security implies BPR-security.
+  \item In \Cref{sec:implicit-only} we show that implicit-only UC-security implies KOY-security.
 \end{enumerate}
 \usetikzlibrary{decorations.markings}
 \tikzset{negated/.style={
@@ -412,7 +414,7 @@ Now suppose $b = 0$. Then when $\adv$ sends $\Test(P^i)$, the game challenger re
 In sum, $\adv$ wins with probability 1 when $b = 1$ and $1-1/2^\lambda$ when $b = 0$. Its overall winning probability is $1-1/2^{\lambda+1}$.
 
 \medskip
-Combining the two claim above immediately yields that $\adv$ wins with overwhelming probability, so $\Pi$ is not KOY-secure.
+Combining the two claim above immediately yields that $\adv$ wins with overwhelming probability, so $\Pi$ is not KOY-secure.\footnote{Here we need $|D| \geq 2$; otherwise $\adv$'s ``baseline'' winning probability is 1, so winning with overwhelming probability does not violate the security definition.}
 \end{proof}
 \paragraph{$\Pi$ is still BPR-secure.}
 Our attack above does not violate the BPR-security of $\Pi$. This is because the sentence in blue does not hold anymore: $\adv$ sends up to $|D|$ $\Send$ commands, so in BPR the number of online attacks is up to $|D|$ and thus $\adv$'s ``baseline'' winning probability is $1/2 + |D|/2|D| = 1$.
