@@ -5,6 +5,7 @@
 \usepackage{amsthm}
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
 \newtheorem{claim}{Claim}
 \usepackage{authblk}
 \usepackage{cryptocode}
@@ -392,8 +393,15 @@ Our attack above does not violate the BPR-security of $\Pi$. This is because the
 \label{sec:implicit-only}
 Our main result in this section is:
 \begin{theorem}
+\label{thm:implicit-only}
 Suppose $\Pi$ is a PAKE protocol that UC-realizes $\Fipake$. Then $\Pi$ is KOY-secure.
 \end{theorem}
+We need the following technical lemma from \cite[Lemma~A.1]{EC:CHKLM05} (for a detailed proof, see \cite[Appendix~A]{PKC:RoyXu23}):
+\begin{lemma}
+\label{lem:spuriousguess}
+Suppose $\Pi$ is a PAKE protocol that UC-realizes $\Fipake$. Fix any ``successful'' simulator $\sim$ that, for any PPT environment, generates a view indistinguishable from the environment's real-world view in $\Pi$; and any PPT environment $\env$. Let $\SpuriousGuess$ be the event that there is a session $sid$ in which $\env$ instructs the adversary to be passive, yet $\sim$ sends $(\TestPwd, sid, \star, \star)$ to $\Fipake$. Then $\Pr[\SpuriousGuess] \leq \negl$.\footnote{Technically speaking $\Pi$ must be correct, i.e., if there is no adversary then the two protocol parties output the same key. See \cite{PKC:RoyXu23} for a discussion. In this work we always assume PAKE protocols to be correct.}
+\end{lemma}
+We are now ready to prove \Cref{thm:implicit-only}.
 \begin{proof}
 Consider any PPT adversary $\widehat{\adv}$ in the KOY-security game for $\Pi$, and let $q$ be the number of online attacks by $\widehat{\adv}$; we want to upper-bound $\widehat{\adv}$'s winning probability. (We use $\widehat{\adv}$ instead of $\adv$ to emphasize that it is the adversary in the game-based definition, not the UC adversary.) The outline of the proof is as follows:
 \begin{enumerate}
@@ -411,7 +419,7 @@ Consider the following UC environment $\env$:
 \setcounter{enumi}{-1}
   \item Sample $b \gets \{0,1\}$ and invoke $\widehat{\adv}$.
   \item For each pair of instances $(P^i, (P')^j)$, sample a password $\pw_{i,j} = \pw_{j,i} \gets D$.
-  \item On $\Execute(P^i, (P')^j)$ from $\widehat{\adv}$, pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, sid_{i,j}, P', \pw_{i,j})$ to $P'$ and $(\NewSession, sid_{i,j}, P, \pw_{i,j})$ to $P$. (Below we may simply write $sid$ and $\pw$ when $i,j$ are clear from the context.) Then instruct the UC PAKE adversary $\adv$ to be passive in this session. After the session completes, provide $\widehat{\adv}$ with its transcript. (Note that $P^i$ is an instance in the KOY-security game simulated by $\env$, whereas $P$ is a UC protocol party that interacts with $\env$.)
+  \item On $\Execute(P^i, (P')^j)$ from $\widehat{\adv}$, pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, \allowbreak sid_{i,j}, P', \pw_{i,j})$ to $P'$ and $(\NewSession, sid_{i,j}, P, \pw_{i,j})$ to $P$. (Below we may simply write $sid$ and $\pw$ when $i,j$ are clear from the context.) Then instruct the UC PAKE adversary $\adv$ to be passive in this session. After the session completes, provide $\widehat{\adv}$ with its transcript. (Note that $P^i$ is an instance in the KOY-security game simulated by $\env$, whereas $P$ is a UC protocol party that interacts with $\env$.)
   \item On $\Send(P^i, (P')^j, \text{start})$ from $\widehat{\adv}$, if there has been a $\Send((P')^j, P^i, \text{start})$ command, then $sid_{j,i} = sid_{i,j}$ must have been defined. In this case, send $(\NewSession, sid_{i,j}, P', \pw)$ to $P$. Otherwise pick a fresh $sid_{i,j} = sid_{j,i}$ and send $(\NewSession, sid_{i,j}, P', \pw)$ to $P$. \\
       On $\Send(P^i, (P')^j, m^*)$ from $\widehat{\adv}$, instruct the UC PAKE adversary $\adv$ to send a message $(sid, m^*)$ to $P'$. \\
       In all cases above, forward the message $\adv$ receives to $\widehat{\adv}$.
@@ -448,7 +456,7 @@ This claim is the crux of the entire proof (and where we crucially deviate from 
 
 Let's call steps 1--4 above a ``cycle''. In short, the game becomes: in each cycle $\{\widehat{\adv}, \sim\}$ may specify $\pw^* \in D$ and $K^*$, and receive $K^*$ if $\pw^* = \pw$ and a uniformly random $K$ otherwise. $\CorrectGuess$ is triggered when $\{\widehat{\adv}, \sim\}$ specifies $\pw$. In each cycle the only information $\{\widehat{\adv}, \sim\}$ learns about $\pw$ is whether $\pw^* = \pw$, so $\Pr[\CorrectGuess]$ is upper-bounded by $\text{(number of cycles)}/|D|$.
 
-How many cycles can $\{\widehat{\adv}, \sim\}$ complete? First, $\widehat{\adv}$ must send a $\Reveal$ or a $\Test$ command on this instance (otherwise $\{\widehat{\adv}, \sim\}$ does not learn $K$ and thus learns no information about $\pw$). Second, if $\SpuriousGuess$ does not happen then this session must be a $\Send$ session (otherwise $\sim$ does not even send a $\TestPwd$ command, i.e., $\{\widehat{\adv}, \sim\}$ does not even specify $\pw^*$). But a cycle that satisfies these conditions is exactly an online attack. Therefore, the number of cycles is at most $q$.
+How many cycles can $\{\widehat{\adv}, \sim\}$ complete? First, $\widehat{\adv}$ must send a $\Reveal$ or a $\Test$ command on this instance (otherwise $\{\widehat{\adv}, \sim\}$ does not learn $K$ and thus learns no information about $\pw$). Second, if $\SpuriousGuess$ does not happen then this instance must be a $\Send$ instance (otherwise $\sim$ does not even send a $\TestPwd$ command, i.e., $\{\widehat{\adv}, \sim\}$ does not even specify $\pw^*$). But a cycle that satisfies these conditions is exactly an online attack. Therefore, the number of cycles is at most $q$.
 
 We conclude that
 \[
