@@ -121,17 +121,17 @@ In this work, we present a thorough study of KOY- and implicit-only UC-security 
 \end{tikzcd}
 \end{center}
 \end{figure}
-Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner, namely \switchocg{name_int}{[Click to reveal spoiler]}
+Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner, namely \switchocg{name_int}{[click to reveal spoiler]}
 \begin{ocg}{name_ext}{name_int}{0}\emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}\end{ocg}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
 
-As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey (or tutorial) of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
+As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions are, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey (or tutorial) of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
 
 \paragraph{A personal anecdote: how did I dig out KOY-security?}
 I learned game-based PAKE security definitions ``backwards''. For a very long time, KOY-security was the standard reference for me, and I had no idea that KOY and BPR were actually different. Very recently, I needed to prove a generalization of UC-security $\Rightarrow$ game-based security, and I just couldn't make the proof go through. After some thought, I realized that the ``theorem'' I tried to prove was actually wrong --- similar to the counterexample in \Cref{sec:counterexample} --- and you needed to tweak the game-based security definition to make the proof work.
 
-At that time I thought there was an error in the standard result in \cite{EC:CHKLM05}. \cite{EC:CHKLM05} claims that their game-based security notion follows BPR, so I checked \cite{EC:BelPoiRog00}. I immediately realized that the ``BPR-security'' I had in mind was in fact not what BPR said, and the actual BPR-security was exactly what I needed in my proof.
+At that time I thought there was an error in the standard result in \cite{EC:CHKLM05}. \cite{EC:CHKLM05} claims that the game-based security notion they use is BPR, so I checked \cite{EC:BelPoiRog00}. I immediately realized that the ``BPR-security'' I had in mind was in fact not what BPR said, and the actual BPR-security was exactly what I needed in my proof.
 
-I decided to write down my counterexample. During this process, I realized that apart from replacing KOY- with BPR-security, another way to invalidate the counterexample was to strengthen UC-security to implicit-only UC-security. Perhaps implicit-statement UC-security implies KOY-security? This proof indeed went through, and the technical pieces of this work were complete.
+I decided to write down my counterexample. During this process, I realized that apart from replacing KOY- with BPR-security, another way to invalidate the counterexample would be to strengthen UC-security to implicit-only UC-security. Perhaps implicit-only UC-security implies KOY-security? This proof indeed went through, and the technical pieces of this work were complete.
 
 \section{Preliminaries}
 \label{sec:prelims}
