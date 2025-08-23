@@ -256,6 +256,22 @@ The game-based definitions reflect the first principle in the ``baseline'' winni
 For the second principle, the technical challenge is to rule out the special cases where output key correlation is inevitable. The game-based definitions prohibit the adversary from $\Reveal$ing one instance and $\Test$ing its counterparty's instance, if the adversary is passive between the two instances; as for successfully attacked instances, the definition simply ``gives up'' and allows the adversary to win (because this possibility is already covered by the ``baseline'' winning probability). The UC definitions again reflect this principle explicitly: the ``successfully attacked instances'' are handled in the first bullet under $\NewKey$, and the ``passive adversary'' is handled in the second bullet.
 
 Finally, the game-based definitions always assume the two instances that connect to each other have the same password, whereas the UC definitions allow the two parties to have different passwords. In particular, what will happen if the adversary is passive between two instances with different passwords? The game-based definitions do not consider this situation, whereas the UC definitions specify that the two instances' output keys must be independently random in this case.
+\subsection{The EKE Protocol}
+The \emph{Encrypted Key Exchange (EKE) protocol} \cite{SP:BelMer92} is the first PAKE protocol ever proposed. Here we will use EKE based on Diffie--Hellman, in which party $P$ samples $x \gets \Z_p$ and sends $c := \ICEnc(\pw, g^x)$ to its counterparty $P'$, and on $c'$ from $P'$, $P$ computes $Y := \ICDec(\pw, c')$ and outputs $\text{Hash}(Y^x)$ as the key; $P'$'s algorithm is completely symmetric. Here, $(\group, g, p)$ is a cyclic group with generator $g$ and order $p$, $(\ICEnc, \ICDec)$ is an ideal cipher whose ciphertext space is $\{0,1\}^\lambda$, and $\text{Hash}$ is an RO whose range is $\{0,1\}^\lambda$.
+\begin{figure}[H]
+\pseudocodeblock{
+P \< \< P' \\ 
+x \gets \Z_p; X := g^x \< \< y \gets \Z_p; Y := g^y \\
+\< \sendmessageright*{c := \ICEnc(\pw,X)} \< \\
+\< \sendmessageleft*{c' := \ICEnc(\pw,Y)} \< \\
+Y := \ICDec(\pw,c') \< \< X := \ICDec(\pw,c) \\
+K := \text{Hash}(Y^x) \< \< K' := \text{Hash}(X^y) \\
+\text{output }K \< \< \text{output }K'
+}
+\caption{The EKE protocol}
+\end{figure}
+
+EKE has been prove to UC-realize the (standard) UC PAKE functionality $\Fpake$ under the CDH assumption in $(\group, g, p)$ \cite{EC:JanRoyXu25}. We specify the EKE protocol for concreteness only; it is only used in our counterexample in \Cref{sec:counterexample}, and can be replaced by any ``normal'' PAKE protocol that UC-realizes $\Fpake$.
 \section{UC-Security Does Not Imply KOY-Security}
 \label{sec:counterexample}
 \subsection{The Counterexample}
@@ -280,7 +296,7 @@ K \< \< K' \\
 Note that $h$ is a redundant message, in the sense that neither party's output depends on it.
 \subsection{The Protocol Is UC-Secure}
 \begin{proof}
-Since EKE is UC-secure, we may replace the EKE part in protocol $\Pi$ with the UC PAKE functionality $\Fpake$. Call the resulting protocol $\tilde{\Pi}$; we only need to prove that $\tilde{\Pi}$ is UC-secure. In order to distinguish the $\Fpake$ that is a building block of the \emph{real protocol} $\tilde{\Pi}$ and the $\Fpake$ that is the functionality interacting with the simulator in the \emph{ideal world}, we abbreviate the latter as $\func$.
+Since EKE UC-realizes $\Fpake$, we may replace the EKE part in protocol $\Pi$ with $\Fpake$. Call the resulting protocol $\tilde{\Pi}$; we only need to prove that $\tilde{\Pi}$ is UC-secure. In order to distinguish the $\Fpake$ that is a building block of the \emph{real protocol} $\tilde{\Pi}$ and the $\Fpake$ that is the functionality interacting with the simulator in the \emph{ideal world}, we abbreviate the latter as $\func$.
 
 Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fpake$ honestly, and samples a random string as $h$, unless $P$'s instance has been successfully attacked --- in which case $\sim$ knows $P$'s EKE key and can simulate $h$ honestly:
 
