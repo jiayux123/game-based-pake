@@ -72,6 +72,16 @@
 
 \maketitle
 
+\begin{abstract}
+A Password-Authenticated Key Exchange (PAKE) protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy ``password''. The two standard security definitions are the game-based one by Bellare, Pointcheval and Rogaway (BPR-security, EUROCRYPT 2000) and the Universally Composable (UC) one by Canetti et al. (EUROCRYPT 2005). It is well-known that UC-security implies BPR-security; however, there are a large number of variants of both definitions, and the relation between them is not entirely clear.
+
+In this work, we thoroughly study a variant of BPR-security by Katz, Ostrovsky and Yung (KOY-security, JACM 2009):
+\begin{enumerate}
+  \item We show, via a counterexample, that UC-security does \emph{not} imply KOY-security;
+  \item We then prove that a variant of UC-security, called implicit-only UC-security (Dupont et al., EUROCRYPT 2018), implies KOY-security.
+\end{enumerate}
+Interestingly, we make the observation that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner. We also present detailed explanations of all four security notions.
+\end{abstract}
 \section{Introduction}
 A \emph{Password-Authenticated Key Exchange (PAKE)} protocol allows two parties to jointly establish a cryptographically strong key, in the setting where the only information shared in advance is a low-entropy string called the password. Crucially, such a protocol must be secure against man-in-the-middle adversaries that can arbitrarily modify the protocol messages. One common attack on PAKE is \emph{online guessing}, in which the adversary chooses a candidate password $\pw^*$ and impersonates Bob to Alice; if Alice's password is indeed $\pw^*$, then the adversary learns Alice's output key. Since passwords have low entropy, the adversary has a non-negligible probability of guessing Alice's password correctly; at a high level security for PAKE requires that online guessing is the only feasible attack.
 
@@ -110,7 +120,7 @@ In this work, we present a thorough study of KOY- and implicit-only UC-security 
 \end{figure}
 Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
 
-As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
+As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey (or tutorial) of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
 
 \paragraph{A personal anecdote: how did I dig out KOY-security?}
 I learned game-based PAKE security definitions ``backwards''. For a very long time, KOY-security was the standard reference for me, and I had no idea that KOY and BPR were actually different. Very recently, I needed to prove a generalization of UC-security $\Rightarrow$ game-based security, and I just couldn't make the proof go through. After some thought, I realized that the ``theorem'' I tried to prove was actually wrong --- similar to the counterexample in \Cref{sec:counterexample} --- and you needed to tweak the game-based security definition to make the proof work.
@@ -257,7 +267,7 @@ For the second principle, the technical challenge is to rule out the special cas
 
 Finally, the game-based definitions always assume the two instances that connect to each other have the same password, whereas the UC definitions allow the two parties to have different passwords. In particular, what will happen if the adversary is passive between two instances with different passwords? The game-based definitions do not consider this situation, whereas the UC definitions specify that the two instances' output keys must be independently random in this case.
 \subsection{The EKE Protocol}
-The \emph{Encrypted Key Exchange (EKE) protocol} \cite{SP:BelMer92} is the first PAKE protocol ever proposed. Here we will use EKE based on Diffie--Hellman, in which party $P$ samples $x \gets \Z_p$ and sends $c := \ICEnc(\pw, g^x)$ to its counterparty $P'$, and on $c'$ from $P'$, $P$ computes $Y := \ICDec(\pw, c')$ and outputs $\text{Hash}(Y^x)$ as the key; $P'$'s algorithm is completely symmetric. Here, $(\group, g, p)$ is a cyclic group with generator $g$ and order $p$, $(\ICEnc, \ICDec)$ is an ideal cipher whose ciphertext space is $\{0,1\}^\lambda$, and $\text{Hash}$ is an RO whose range is $\{0,1\}^\lambda$.
+The \emph{Encrypted Key Exchange (EKE) protocol} \cite{SP:BelMer92} is the first PAKE protocol ever proposed. Here we will use EKE based on Diffie--Hellman, in which party $P$ samples $x \gets \Z_p$ and sends $c := \ICEnc(\pw, g^x)$ to its counterparty $P'$, and on $c'$ from $P'$, $P$ computes $Y := \ICDec(\pw, c')$ and outputs $\text{Hash}(Y^x)$ as the key; $P'$'s algorithm is completely symmetric. Here, $(\group, g, p)$ is a cyclic group with generator $g$ and order $p$, $(\ICEnc, \ICDec)$ is an ideal cipher, and $\text{Hash}$ is an RO; both have range $\{0,1\}^\lambda$.
 \begin{figure}[H]
 \pseudocodeblock{
 P \< \< P' \\ 
