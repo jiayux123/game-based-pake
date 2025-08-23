@@ -107,7 +107,7 @@ In this work, we present a thorough study of KOY- and implicit-only UC-security 
 \end{tikzcd}
 \end{center}
 \end{figure}
-Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their more standard counterparts in the same way, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
+Finally, in \Cref{sec:conclusion} we point out that KOY- and implicit-only UC-security essentially strengthen their standard counterparts in the same manner, namely \emph{disallowing the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked party's output key)}. In this way, we give an interpretation of what exactly the KOY- and implicit-only UC-security notions entail.
 
 As a side contribution, in \Cref{sec:prelims} we discuss the four security definitions in detail --- not only \emph{what} exactly these definitions do, but also the \emph{rationales} behind certain design choices in the definitions. By doing this, we hope to help ``demystify'' PAKE security notions and make them more friendly to beginners; as such, this work also serves as a survey of different PAKE security definitions --- which is incomplete but does cover the standard ones that are most commonly used.
 
@@ -178,7 +178,7 @@ If we stop here then there are a few ways for $\adv$ to win trivially, which we 
   \item If $\adv$ sends $\Execute(P^i, (P')^j)$, then $P^i$ and $(P')^j$'s output keys are the same. Then if $\adv$ $\Reveal$s one of them and $\Test$s the other, then again $b = 1$ if and only if they return the same result.
   \item Note that $\Reveal$ is not the only way for $\adv$ to be passive: if both $P^i$ and $(P')^j$ are $\Send$ instances, and their views are identical (i.e., $\adv$ forwards all messages between them via $\Send$ commands), then $P^i$ and $(P')^j$'s output keys are again the same. If $\adv$ $\Reveal$s one of them and $\Test$s the other, then $b = 1$ if and only if they return the same result.\footnote{This does not consider the case where $\adv$ is ``effectively passive'' by merely modifying the \emph{format} of protocol messages. For example, if the protocol message contains a bit $\mathsf{bit}$ that is ignored by the receiver, then $\adv$ can flip $\mathsf{bit}$ while transmitting this message; this should be treated as if $\adv$ is passive. We do not consider such degenerate cases, as they are inconsequential to our main results; for how to talk about such cases formally, see the discussion about ``session ID'' (not to be confused with the session ID in the UC framework) in \cite{EC:BelPoiRog00,JACM:KatOstYun09}.}
 \end{enumerate}
-We need to prohibit all these behaviors, i.e., we only quantify over all PPT adversaries that do not do any of 1--3 above.\footnote{\cite{EC:BelPoiRog00,JACM:KatOstYun09} define two instances to be \emph{partnered} if their transcripts are the same. Then 1--3 above can be succinctly stated as: For the instance that $\adv$ $\Test$s, $\adv$ cannot $\Reveal$ either the instance itself or its partner, no matter whether $\Reveal$ happens first or $\Test$ happens first.}
+We need to prohibit all these behaviors, i.e., we only quantify over all PPT adversaries that do not do any of 1--3 above.\footnote{\cite{EC:BelPoiRog00,JACM:KatOstYun09} define two instances to be \emph{partnered} if their transcripts are the same. Using this term, 1--3 above can be succinctly stated as: For the instance that $\adv$ $\Test$s, $\adv$ cannot $\Reveal$ either the instance itself or its partner, no matter whether $\Reveal$ happens first or $\Test$ happens first.}
 
 Note that 2 and 3 above exactly reflect the second principle in \Cref{sec:principles}: if $\adv$ is passive between $P^i$ and $(P')^j$, then their output keys will be the same, and we need to place some restrictions on what $\adv$ can $\Test$. PAKE security should mean that except for these cases, the instances' output keys should be uniformly random and independent of everything else, so $\adv$ can $\Test$ any one of them and the real key should be indistinguishable from a random string --- unless $\adv$ succeeds in an online attack, which we define next.
 \paragraph{The ``baseline'' winning probability.}
@@ -237,11 +237,11 @@ Finally, a $\NewKey$ command allows an instance to complete and output its key. 
 \begin{figure}[H]
 \begin{center}
 $
-\begin{array}{c c c c c}
-\NewSession & \longrightarrow & \TestPwd & \longrightarrow & \NewKey \\
+\begin{array}{c c c c c c c}
+\text{command} & & \NewSession & \longrightarrow & \TestPwd & \longrightarrow & \NewKey \\
 \\
-\fresh & \longrightarrow & \compromised & \longrightarrow & \completed \\
- & & \text{or }\interrupted & &
+\text{state} & & \fresh & \longrightarrow & \compromised & \longrightarrow & \completed \\
+ & & & & \text{or }\interrupted & &
 \end{array}
 $
 \end{center}
@@ -388,21 +388,6 @@ Combining the two claim above immediately yields that $\adv$ wins with overwhelm
 \paragraph{$\Pi$ is still BPR-secure.}
 Our attack above does not violate the BPR-security of $\Pi$. This is because the sentence in blue does not hold anymore: $\adv$ sends up to $|D|$ $\Send$ commands, so in BPR the number of online attacks is up to $|D|$ and thus $\adv$'s ``baseline'' winning probability is $1/2 + |D|/2|D| = 1$.
 
-\subsection{What Does This Entail?}
-Where do things go wrong: is the UC-security notion too weak, or is the game-based security notion too strong?
-
-The crux of the whole issue lies in how exactly an ``online attack'' is defined in the game-based security definition. There, an instance is said to be actively attacked \emph{only if there is \textbf{both} a $\Send$ command and a $\Test$ command} for this instance. In other words, if the adversary actively chooses protocol messages but does not see the attacked party's output key, then this doesn't count as an ``online attack''. However, our counterexample has the property that
-\begin{displayquote}
-\emph{The protocol transcript --- without the honest party's output key --- already leaks information about the password.}
-\end{displayquote}
-Therefore, the adversary can test a password guess --- and eventually find the correct password --- without sending a $\Test$ command (i.e., without an ``online attack''), violating game-based security.
-
-On the other hand, this property is allowed by the UC-security notion. In fact this is even \emph{intended}: in the UC PAKE functionality online attacks are modeled by the $\TestPwd$ command, from which the ideal adversary can learn whether its password guess is correct or not. This is intended to model the scenario where \emph{the adversary learns whether its password guess is correct immediately after sending the protocol message that contains the password guess, without seeing the attacked party's output key}.
-
-In other words, there is a mismatch between the two security notions regarding whether the adversary can learn whether its password guess is correct by looking at the protocol transcript only: the game-based security notion says ``no'', whereas the UC-security notion says ``yes''. Our counterexample exactly exploits this gap.
-
-We argue that the UC-security notion is the more ``natural'' way of modeling PAKE security. Indeed, what we do in our counterexample --- sending an authenticator for the counterparty to check if the login attempt has been successful --- is exactly what's done to achieve explicit authentication in PAKE, i.e., the property above is common. (The uncommon thing in our counterexample is that the receiver does not actually verify the authenticator and outputs the intended output key anyway.) Therefore, in the game-based security definition a $\Send$ command alone --- which allows the adversary to see the protocol transcript --- should already be counted as an online attack.
-
 \section{Implicit-Only UC-Security Implies KOY-Security}
 \label{sec:implicit-only}
 Our main result in this section is:
@@ -504,6 +489,21 @@ completing the proof.
 Crucially, this cycle does not require $\widehat{\adv}$ to send $\Reveal$ or $\Test$, i.e., $\sim$ can ``help'' $\widehat{\adv}$ gain some information about $\pw$ without $\widehat{\adv}$ performing an online attack (per the KOY notion). This is exactly what our counterexample in \Cref{sec:counterexample} exploits.
 
 On the other hand, if we take the BPR notion (where a $\Send$ command already counts as an online attack), then the cycle above still requires an online attack (assuming $\SpuriousGuess$ does not happen) and the rest of the proof still goes through. In this way we recover the security proof of UC-security $\Rightarrow$ BPR-security \cite{EC:CHKLM05}.
+
+\section{Discussion}
+\label{sec:conclusion}
+How to interpret our results? Let's first look at the difference between the two game-based security definitions. In BPR-security, any $\Send$ command to an instance counts as an online attack; whereas in KOY-security, an online attack must also $\Reveal$ or $\Test$ the instance's key. In other words, BPR-security allows the protocol transcript alone to leak some information about the password in an active attack, whereas in KOY-security only the protocol transcript {\color{blue}plus the attacked instance's output key} may tell the adversary something about the password --- which is inevitable.\footnote{Note that even in BPR-security, the transcript should not leak any information about the password if the adversary is passive (i.e., the adversary sends an $\Execute$ command).} Our counterexample in \Cref{sec:counterexample} exactly exploits this: the protocol message $h$ allows the adversary to test password guesses --- and eventually find the correct password --- by sending $\Send$ commands only, violating KOY- but not BPR-security.
+
+The difference between UC- and implicit-only UC-security can be interpreted in a similar way. Consider the two ideal functionalities: $\Fpake$ allows the ideal adversary to check if its password guess is correct or not via a $\TestPwd$ command, which means that in the real world the adversary can learn this bit of information by observing the transcript in an active attack; whereas in $\Fipake$ the adversary does not learn this bit. In fact, in $\Fipake$ \emph{the ideal adversary never learns any information about any instance's password}, which is crucial in our proof in \Cref{sec:implicit-only}.
+
+Our conclusion is that KOY- and implicit-only UC-security notions strengthen their standard counterparts in the same manner, namely
+\begin{framed}
+\begin{displayquote}
+  \emph{KOY- and implicit-only UC-security disallow the adversary from learning whether an online attack has succeeded or not by merely examining the protocol transcript (without seeing the attacked instance's output key).}
+\end{displayquote}
+\end{framed}
+
+Finally, we explain why this property is called ``implicit-only''. PAKE with explicit authentication allows each protocol party to check whether the authentication has been successful, i.e., whether its output key is equal to its counterparty's. But if an honest party can learn this, then an adversary that impersonates this party on a password guess can also learn this; that is, an adversary that communicates with Alice by running Bob's algorithm on password guess $\pw^*$, can learn whether it computes the same key as Alice's output key --- which in turn is equivalent to $\pw^*$ being equal to Alice's password. In this way, the adversary can test a password guess without seeing Alice's output key, violating KOY- or implicit-only UC-security. In other words, \emph{a PAKE protocol with explicit authentication cannot be implicit-only UC-secure} --- indeed, the message $h$ in our counterexample is exactly what a protocol party would send if we wanted to add explicit authentication to EKE.
 
 \bibliographystyle{alpha}
 \bibliography{bib.bib}
