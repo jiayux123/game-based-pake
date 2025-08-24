@@ -316,9 +316,11 @@ Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fp
 
 \bigskip\noindent\textbf{\underline{Simulator $\sim$}:}
 \begin{enumerate}
+\setcounter{enumi}{-1}
+  \item Answer $H$ and $H_0$ queries (either from $\adv$ or from $\sim$ itself) via lazy sampling.
   \item On $(\NewSession, sid, P, P')$ from $\func$, send the same message from $\Fpake$ to $\adv$. \\
       On $(\NewSession, sid, P', P)$ from $\func$, also send the same message from $\Fpake$ to $\adv$.
-  \item On $(\TestPwd, sid, \star, \star)$ from $\adv$ to $\Fpake$, forward this message to $\func$ and sends $\func$'s responde from $\Fpake$ to $\adv$. This defines a state of $P$'s instance ($\fresh$, $\compromised$ or $\interrupted$).
+  \item On $(\TestPwd, sid, \star, \star)$ from $\adv$ to $\Fpake$, forward this message to $\func$ and sends $\func$'s responde from $\Fpake$ to $\adv$.
   \item On $(\NewKey, sid, P, K^*)$ from $\adv$ to $\Fpake$,
       \begin{enumerate}[(i)]
         \item If there has been a $(\TestPwd, sid, P, \star)$ command from $\adv$ to $\Fpake$ which resulted in ``correct guess'' (see step 2), then set $h := H_0(K^*)$; otherwise sample $h \gets \{0,1\}^\lambda$. Either way, send $h$ from $P$ to $P'$.
@@ -327,7 +329,7 @@ Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fp
   \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$ to $\Fpake$ and $h^*$ from $\adv$ to $P'$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P', (SK')^*)$ to $\func$.
 \end{enumerate}
 
-We now show that for any environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
+We now show that for any PPT environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
 \begin{itemize}
   \item $\adv$ does not send a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', but
   \item $\adv$ queries $H_0(K)$ or $H(K)$.
@@ -335,7 +337,7 @@ We now show that for any environment $\env$, $\sim$ generates an ideal-world vie
 Define $\mathsf{QueryP'}$ be the event that
 \begin{itemize}
   \item $\adv$ does not send a $(\TestPwd, sid, P', \star)$ command resulting in ``correct guess'', but
-  \item $\adv$ queries $H(K)$.
+  \item $\adv$ queries $H(K')$.
 \end{itemize}
 \begin{claim}
 $\Pr[\mathsf{QueryP}]$ and $\Pr[\mathsf{QueryP'}]$ are both negligible.
@@ -372,10 +374,10 @@ Consider the following adversary $\adv$. Roughly speaking, $\adv$ assumes the ro
 \medskip
 For all $\pw_i \in D$, $\adv$ performs the following steps until it finds $\pw^*$:
 \begin{enumerate}
-  \item Initiate $P$'s instance $P^i$ by sending $\Send(P^i, \text{start})$ to the game challenger.
+  \item Initiate $P$'s instance $P^i$ by sending $\Send(P^i, (P')^j, \text{start})$ to the game challenger.
   \item On $c$ from the game challenger, sample $y \gets \Z_p$ and
       \begin{enumerate}[(i)]
-        \item Compute $Y^* := \ICEnc(\pw_i, g^y)$ and send $\Send((P')^i, P^i, Y^*)$ to the game challenger.
+        \item Compute $Y^* := \ICEnc(\pw_i, g^y)$ and send $\Send((P')^j, P^i, Y^*)$ to the game challenger.
         \item Also, compute $X := \ICDec(\pw_i, c)$ and then $K^* := X^y$.
       \end{enumerate}
   \item On $h$ from the game challenger, check if $h = H_0(K^*)$. If so, set $\pw^* := \pw_i$ and break the for-loop. Otherwise move on to the next element in $D$.
@@ -399,11 +401,11 @@ After the for-loop ends, $\adv$ finds the $i$ such that $\pw^* = \pw_i$ and perf
   \item Send $\Test(P^i)$ to the game challenger. If the result is equal to $H(K^*)$, output 1; otherwise output 0.
 \end{enumerate}
 
-Note that {\color{blue}$\adv$ only sends a single $\Test$ command, so it only does 1 active session attack and its ``baseline'' winning probability is $1/2 + 1/2|D|$}. However, we show that $\adv$'s winning probability is in fact overwhelming:
+Note that {\color{blue}$\adv$ only sends a single $\Test$ command, so it only does one online attack and its ``baseline'' winning probability is $1/2 + 1/2|D|$}. However, we show that $\adv$'s winning probability is in fact overwhelming:
 \begin{claim}
 The probability that $\pw^* = \pw$, i.e., $\adv$ finds the correct password, is overwhelming.
 \end{claim}
-Recall EKE has the property that the two parties' output keys are equal \emph{if and only if} their passwords match. Note that $\adv$'s steps 1--2 are exactly what an honest $P'$ would to on password $\pw_i$; therefore, if $\pw_i = \pw$ then $P$'s EKE key $K \neq K^*$, so $h = H_0(K)$ is not equal to $H_0(K^*)$ except with probability $1/2^\lambda$, causing $\adv$ to move on to the next candidate password. If $\pw_i = \pw$ then $P$'s EKE key $K = K^*$, so $h = H_0(K) = H_0(K')$, causing $\adv$ to break the for-loop and set $\pw^* := \pw_i = \pw$. Overall, $\adv$ sets $\pw^* = \pw$ except with probability up to $(|D|-1)/2^\lambda$.
+EKE has the property that the two parties' output keys are equal \emph{if and only if} their passwords match. Note that $\adv$'s steps 1--2 are exactly what an honest $P'$ would to on password $\pw_i$; therefore, if $\pw_i \neq \pw$ then $P$'s EKE key $K \neq K^*$, so $h = H_0(K)$ is not equal to $H_0(K^*)$ except with probability $1/2^\lambda$, causing $\adv$ to move on to the next candidate password. If $\pw_i = \pw$ then $P$'s EKE key $K = K^*$, so $h = H_0(K) = H_0(K')$, causing $\adv$ to break the for-loop and set $\pw^* := \pw_i = \pw$. Overall, $\adv$ sets $\pw^* = \pw$ except with probability up to $(|D|-1)/2^\lambda$.
 \begin{claim}
 If $\pw^* = \pw$, then $\adv$ wins with overwhelming probability.
 \end{claim}
