@@ -95,7 +95,7 @@ Over the years, a large number of variants of both BPR- and UC-security have bee
   \item The variant of BPR-security by Katz, Ostrovsky and Yung \cite{JACM:KatOstYun09} (henceforth \emph{KOY-security}), which places more constraints on what exactly counts as an ``online attack''; and
   \item The variant of UC-security by Dupont et al. \cite{EC:DHPRY18} called \emph{implicit-only UC-security}, which disallows the ideal adversary from learning whether an online attack has succeeded or not.
 \end{itemize}
-Neither of the aforementioned works' main focus was on security notions. The conference proceedings version of the KOY paper \cite{EC:KatOstYun01} proposed a new PAKE protocol and proved its BPR-security; in the journal version \cite{JACM:KatOstYun09} KOY proved that their protocol actually satisfies the stronger KOY-security, although the difference between these two notions was left unexplained. Implicit-only UC-security was introduced because the authors of \cite{EC:DHPRY18} used PAKE to construct what's called fuzzy PAKE, and the underlying PAKE needs to satisfy this stronger security notion for their fuzzy PAKE protocols to be secure. Perhaps this explains why these two security notions are not widely used: we do not know of any studies of either KOY- or implicit-only UC-security per se, and subsequent works generally continued to use BPR- and UC-security.
+Neither of the aforementioned works' main focus was on security notions. The conference proceedings version of the KOY paper \cite{EC:KatOstYun01} proposed a new PAKE protocol and proved its BPR-security; in the journal version \cite{JACM:KatOstYun09} KOY proved that their protocol actually satisfies the stronger KOY-security, although the difference between these two notions was left unexplained. (The KOY-security notion has since been used in some subsequent works \cite{TCC:KatVai11}.) Implicit-only UC-security was introduced because the authors of \cite{EC:DHPRY18} used PAKE to construct what's called fuzzy PAKE, and the underlying PAKE needs to satisfy this stronger security notion for their fuzzy PAKE protocols to be secure. Perhaps this explains why these two security notions are not widely used: we do not know of any studies of either KOY- or implicit-only UC-security per se, and subsequent works generally continued to use BPR- and UC-security.
 
 \paragraph{Our contributions.}
 In this work, we present a thorough study of KOY- and implicit-only UC-security for PAKE, and draw some interesting connections between them and their more standard counterparts. Our technical contributions are two-fold:
@@ -329,12 +329,12 @@ Consider the following simulator $\sim$. Roughly speaking, $\sim$ simulates $\Fp
   \item On $(\NewKey, sid, P', (K')^*)$ from $\adv$ to $\Fpake$ and $h^*$ from $\adv$ to $P'$, compute $(SK')^* := H((K')^*)$ and send $(\NewKey, sid, P', (SK')^*)$ to $\func$.
 \end{enumerate}
 
-We now show that for any PPT environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ be the event that
+We now show that for any PPT environment $\env$, $\sim$ generates an ideal-world view that is indistinguishable from $\env$'s real-world view. Let $K$ and $K'$ be $P$ and $P'$'s EKE key, respectively, and $SK$ and $SK'$ be $P$ and $P'$'s final output key in $\tilde{\Pi}$, respectively. Define $\mathsf{QueryP}$ as the event that
 \begin{itemize}
   \item $\adv$ does not send a $(\TestPwd, sid, P, \star)$ command resulting in ``correct guess'', but
   \item $\adv$ queries $H_0(K)$ or $H(K)$.
 \end{itemize}
-Define $\mathsf{QueryP'}$ be the event that
+Define $\mathsf{QueryP'}$ as the event that
 \begin{itemize}
   \item $\adv$ does not send a $(\TestPwd, sid, P', \star)$ command resulting in ``correct guess'', but
   \item $\adv$ queries $H(K')$.
