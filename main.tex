@@ -271,7 +271,7 @@ For the second principle, the technical challenge is to rule out the special cas
 
 Finally, the game-based definitions always assume two instances that connect to each other have the same password, whereas the UC definitions allow the two parties to have different passwords. In particular, what will happen if the adversary is passive between two instances with different passwords? The game-based definitions do not consider this situation, whereas the UC definitions specify that the two instances' output keys must be independently random in this case.
 \subsection{The EKE Protocol}
-The \emph{Encrypted Key Exchange (EKE) protocol} \cite{SP:BelMer92} is the first PAKE protocol ever proposed. Here we will use EKE based on Diffie--Hellman, in which party $P$ samples $x \gets \Z_p$ and sends $c := \ICEnc(\pw, g^x)$ to its counterparty $P'$, and on $c'$ from $P'$, $P$ computes $Y := \ICDec(\pw, c')$ and outputs $\text{Hash}(Y^x)$ as the key; $P'$ does the same. Here, $(\group, g, p)$ is a cyclic group with generator $g$ and order $p$, $(\ICEnc, \ICDec)$ is an ideal cipher, and $\text{Hash}$ is an RO; both have range $\{0,1\}^\lambda$.
+The \emph{Encrypted Key Exchange (EKE) protocol} \cite{SP:BelMer92} is the first PAKE protocol ever proposed. Here we will use EKE based on Diffie--Hellman, in which party $P$ samples $x \gets \Z_p$ and sends $c := \ICEnc(\pw, g^x)$ to its counterparty $P'$, and on $c'$ from $P'$, $P$ computes $Y := \ICDec(\pw, c')$ and outputs $\text{Hash}(Y^x)$ as the key; $P'$ does the same. Here, $(\group, g, p)$ is a cyclic group with generator $g$ and order $p$, $(\ICEnc, \ICDec)$ is an ideal cipher (where $\ICEnc$ is the IC encryption algorithm and $\ICDec$ is the IC decryption algorithm), and $\text{Hash}$ is an RO; both have range $\{0,1\}^\lambda$.
 \begin{figure}[H]
 \pseudocodeblock{
 P \< \< P' \\ 
@@ -401,7 +401,7 @@ After the for-loop ends, $\adv$ finds the $i$ such that $\pw^* = \pw_i$ and perf
   \item Send $\Test(P^i)$ to the game challenger. If the result is equal to $H(K^*)$, output 1; otherwise output 0.
 \end{enumerate}
 
-Note that {\color{blue}$\adv$ only sends a single $\Test$ command, so it only does one online attack and its ``baseline'' winning probability is $1/2 + 1/2|D|$}. However, we show that $\adv$'s winning probability is in fact overwhelming:
+Note that {\color{blue}$\adv$ sends no $\Reveal$ command and a single $\Test$ command, so it only does one online attack and its ``baseline'' winning probability is $1/2 + 1/2|D|$}. However, we show that $\adv$'s winning probability is in fact overwhelming:
 \begin{claim}
 The probability that $\pw^* = \pw$, i.e., $\adv$ finds the correct password, is overwhelming.
 \end{claim}
@@ -480,7 +480,7 @@ Suppose $\SpuriousGuess$ does not happen. Then $\Pr[\CorrectGuess] \leq \cfrac{q
 This claim is the crux of the entire proof (and where we crucially deviate from \cite{EC:CHKLM05}). The key point is to \emph{view $\widehat{\adv}$ and $\sim$ combined as a single entity, and see what information it receives about $\pw$}. In fact there is only a single cycle through which $\widehat{\adv}$ and $\sim$ might (jointly) learn some information about $\pw$:
 \begin{enumerate}
   \item For a certain instance, $\sim$ submits a password guess $\pw^*$ (via $\TestPwd$) and a key $SK^*$ (via $\NewKey$) to $\Fipake$.
-  \item $\Fipake$ generates key $SK$ which is equal to $SK^*$ if $\pw^* = \pw$ and uniformly random otherwise. $\Fipake$ then sends $K$ to the UC protocol party $P$.
+  \item $\Fipake$ generates key $SK$ which is equal to $SK^*$ if $\pw^* = \pw$ and uniformly random otherwise. $\Fipake$ then sends $SK$ to the UC protocol party $P$.
   \item $P$ forwards $SK$ to $\env$.
   \item When $\widehat{\adv}$ sends a $\Reveal$ command for this instance, or a $\Test$ command in the case of $b = 1$, $\env$ returns $SK$ to $\widehat{\adv}$.
 \end{enumerate}
@@ -502,7 +502,7 @@ Consider the instance for which $\widehat{\adv}$ sends $\Test$. If it is an $\Ex
 \medskip
 Combining the two claims above, we get
 \begin{align*}
-&\Pr[\env\text{ outputs }1\text{ in the real world}] \\
+&\Pr[\env\text{ outputs }1\text{ in the ideal world}] \\
 \leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[b^* = b \land \overline{\CorrectGuess} \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
 \leq& \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \frac{1}{2}(1 - \Pr[\CorrectGuess \mid \overline{\SpuriousGuess}]) + \Pr[\SpuriousGuess] \\
 =& \frac{1}{2} + \frac{1}{2}\Pr[\CorrectGuess \mid \overline{\SpuriousGuess}] + \Pr[\SpuriousGuess] \\
@@ -517,7 +517,7 @@ In sum, $\env$'s distinguishing advantage is at least
 \]
 which is negligible since $\Pi$ UC-realizes $\Fipake$. So
 \[
-\Pr[\widehat{\adv}\text{ wins}] \geq \frac{1}{2} + \frac{q}{2|D|} + \negl,
+\Pr[\widehat{\adv}\text{ wins}] \leq \frac{1}{2} + \frac{q}{2|D|} + \negl,
 \]
 completing the proof.
 \end{proof}
